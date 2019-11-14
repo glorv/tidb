@@ -102,7 +102,16 @@ func (s *seqTestSuite) SetUpSuite(c *C) {
 
 func (s *seqTestSuite) TearDownSuite(c *C) {
 	s.domain.Close()
-	s.store.Close()
+	_ = s.store.Close()
+}
+
+func (s *seqTestSuite) TearDownTest(c *C) {
+	tk := testkit.NewTestKitWithInit(c, s.store)
+	r := tk.MustQuery("show tables")
+	for _, tb := range r.Rows() {
+		tableName := tb[0]
+		tk.MustExec(fmt.Sprintf("drop table %v", tableName))
+	}
 }
 
 func (s *seqTestSuite) TestEarlyClose(c *C) {
