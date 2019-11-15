@@ -132,6 +132,8 @@ type testDBSuite3 struct{ *testDBSuite }
 type testDBSuite4 struct{ *testDBSuite }
 type testDBSuite5 struct{ *testDBSuite }
 
+var createDeleteTotal int64
+
 func (s *testDBSuite4) TestAddIndexWithPK(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
@@ -944,10 +946,13 @@ func testAddIndex(c *C, store kv.Storage, lease time.Duration, testPartition boo
 	start := -10
 	num := defaultBatchSize
 	// first add some rows
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "insert into test_add_index values ")
 	for i := start; i < num; i++ {
-		sql := fmt.Sprintf("insert into test_add_index values (%d, %d, %d)", i, i, i)
-		tk.MustExec(sql)
+		fmt.Fprintf(&builder, "(%d, %d, %d),", i, i, i)
 	}
+	sql := builder.String()
+	tk.MustExec(sql[:len(sql)-1])
 
 	// Add some discrete rows.
 	maxBatch := 20
@@ -957,16 +962,20 @@ func testAddIndex(c *C, store kv.Storage, lease time.Duration, testPartition boo
 	base := defaultBatchSize * 20
 	for i := 1; i < batchCnt; i++ {
 		n := base + i*defaultBatchSize + i
-		for j := 0; j < rand.Intn(maxBatch); j++ {
+		builder.Reset()
+		fmt.Fprintf(&builder, "insert into test_add_index values ")
+		for j := 0; j < rand.Intn(maxBatch-1)+1; j++ {
 			n += j
-			sql := fmt.Sprintf("insert into test_add_index values (%d, %d, %d)", n, n, n)
-			tk.MustExec(sql)
+			fmt.Fprintf(&builder, "(%d, %d, %d),", n, n, n)
 			otherKeys = append(otherKeys, n)
 		}
+		sql := builder.String()
+		tk.MustExec(sql[:len(sql)-1])
 	}
+
 	// Encounter the value of math.MaxInt64 in middle of
 	v := math.MaxInt64 - defaultBatchSize/2
-	sql := fmt.Sprintf("insert into test_add_index values (%d, %d, %d)", v, v, v)
+	sql = fmt.Sprintf("insert into test_add_index values (%d, %d, %d)", v, v, v)
 	tk.MustExec(sql)
 	otherKeys = append(otherKeys, v)
 
@@ -994,6 +1003,24 @@ LOOP:
 			}
 			step := 10
 			// delete some rows, and add some data
+			start := time.Now()
+			// delete some rows, and add some data
+			//var builder strings.Builder
+			//var deleteBuilder strings.Builder
+			//fmt.Fprintf(&builder, "insert into test_add_index values ")
+			//fmt.Fprintf(&deleteBuilder, "delete from test_add_index where c1 in (")
+			//for i := num; i < num+step; i++ {
+			//	n := rand.Intn(num)
+			//	deletedKeys[n] = struct{}{}
+			//	fmt.Fprintf(&deleteBuilder, "%d,", n)
+			//	fmt.Fprintf(&builder, "(%d, %d, %d),", i, i, i)
+			//}
+			//delSql := deleteBuilder.String()
+			//tk.MustExec(delSql[:len(delSql)-1] + ")")
+			//sql = builder.String()
+			//tk.MustExec(sql[:len(sql)-1])
+			//num += step
+			//fmt.Printf("delete and add 10 row cost: %v\n", time.Now().Sub(start))
 			for i := num; i < num+step; i++ {
 				n := rand.Intn(num)
 				deletedKeys[n] = struct{}{}
@@ -1003,6 +1030,7 @@ LOOP:
 				tk.MustExec(sql)
 			}
 			num += step
+			createDeleteTotal += int64(time.Now().Sub(start))
 		}
 	}
 
@@ -1030,8 +1058,12 @@ LOOP:
 	}
 
 	// test index range
-	for i := 0; i < 100; i++ {
-		index := rand.Intn(len(keys) - 3)
+	step := len(keys) / 20
+	for i := 0; i <= 20; i++ {
+		index := i * step
+		if index >= len(keys) - 3 {
+			index = len(keys) - 3
+		}
 		rows := tk.MustQuery("select c1 from test_add_index where c3 >= ? order by c1 limit 3", keys[index]).Rows()
 		matchRows(c, rows, [][]interface{}{{keys[index]}, {keys[index+1]}, {keys[index+2]}})
 	}
@@ -2580,7 +2612,7 @@ func (s *testDBSuite5) TestCheckColumnDefaultValue(c *C) {
 func (s *testDBSuite1) TestCharacterSetInColumns(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("create database varchar_test;")
-	defer s.tk.MustExec("drop database varchar_test;")
+	//defer s.tk.MustExec("drop database varchar_test;")
 	s.tk.MustExec("use varchar_test")
 	s.tk.MustExec("create table t (c1 int, s1 varchar(10), s2 text)")
 	s.tk.MustQuery("select count(*) from information_schema.columns where table_schema = 'varchar_test' and character_set_name != 'utf8mb4'").Check(testkit.Rows("0"))
