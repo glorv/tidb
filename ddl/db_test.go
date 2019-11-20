@@ -2076,11 +2076,7 @@ func (s *testDBSuite6) TestTableForeignKey(c *C) {
 	s.tk.MustExec("drop table if exists t1,t2,t3;")
 }
 
-<<<<<<< HEAD
 func (s *testDBSuite3) TestFKOnGeneratedColumns(c *C) {
-=======
-func (s *testDBSuite6) TestFKOnGeneratedColumns(c *C) {
->>>>>>> split testDBSuite2
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test")
 	// test add foreign key to generated column
