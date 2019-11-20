@@ -66,6 +66,7 @@ var _ = Suite(&testDBSuite2{&testDBSuite{}})
 var _ = Suite(&testDBSuite3{&testDBSuite{}})
 var _ = Suite(&testDBSuite4{&testDBSuite{}})
 var _ = Suite(&testDBSuite5{&testDBSuite{}})
+var _ = Suite(&testDBSuite6{&testDBSuite{}})
 
 const defaultBatchSize = 1024
 
@@ -131,6 +132,7 @@ type testDBSuite2 struct{ *testDBSuite }
 type testDBSuite3 struct{ *testDBSuite }
 type testDBSuite4 struct{ *testDBSuite }
 type testDBSuite5 struct{ *testDBSuite }
+type testDBSuite6 struct{ *testDBSuite }
 
 func (s *testDBSuite4) TestAddIndexWithPK(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
@@ -1183,7 +1185,7 @@ func (s *testDBSuite1) TestDropPrimaryKey(c *C) {
 	testDropIndex(c, s.store, s.lease, createSQL, dropIdxSQL, idxName)
 }
 
-func (s *testDBSuite2) TestDropIndex(c *C) {
+func (s *testDBSuite6) TestDropIndex(c *C) {
 	idxName := "c3_index"
 	createSQL := "create table test_drop_index (c1 int, c2 int, c3 int, unique key(c1), key c3_index(c3))"
 	dropIdxSQL := "alter table test_drop_index drop index c3_index;"
@@ -1740,7 +1742,7 @@ LOOP:
 // TestDropColumn is for inserting value with a to-be-dropped column when do drop column.
 // Column info from schema in build-insert-plan should be public only,
 // otherwise they will not be consist with Table.Col(), then the server will panic.
-func (s *testDBSuite2) TestDropColumn(c *C) {
+func (s *testDBSuite6) TestDropColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("create database drop_col_db")
 	s.tk.MustExec("use drop_col_db")
@@ -2057,7 +2059,7 @@ func (s *testDBSuite2) TestCreateTableWithSetCol(c *C) {
 	s.tk.MustQuery("select * from t_set").Check(testkit.Rows("1,4,10,21"))
 }
 
-func (s *testDBSuite2) TestTableForeignKey(c *C) {
+func (s *testDBSuite6) TestTableForeignKey(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test")
 	s.tk.MustExec("create table t1 (a int, b int);")
@@ -2074,7 +2076,11 @@ func (s *testDBSuite2) TestTableForeignKey(c *C) {
 	s.tk.MustExec("drop table if exists t1,t2,t3;")
 }
 
+<<<<<<< HEAD
 func (s *testDBSuite3) TestFKOnGeneratedColumns(c *C) {
+=======
+func (s *testDBSuite6) TestFKOnGeneratedColumns(c *C) {
+>>>>>>> split testDBSuite2
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test")
 	// test add foreign key to generated column
@@ -2883,7 +2889,7 @@ func (s *testDBSuite1) TestModifyColumnNullToNotNull(c *C) {
 	c.Assert(err.Error(), Equals, "[table:1364]Field 'c2' doesn't have a default value")
 }
 
-func (s *testDBSuite2) TestTransactionOnAddDropColumn(c *C) {
+func (s *testDBSuite6) TestTransactionOnAddDropColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.mustExec(c, "use test_db")
 	s.mustExec(c, "drop table if exists t1")
@@ -3429,7 +3435,7 @@ func (s *testDBSuite4) TestAlterShardRowIDBits(c *C) {
 
 // port from mysql
 // https://github.com/mysql/mysql-server/blob/124c7ab1d6f914637521fd4463a993aa73403513/mysql-test/t/lock.test
-func (s *testDBSuite2) TestLock(c *C) {
+func (s *testDBSuite6) TestLock(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk := s.tk
 	tk.MustExec("use test")
@@ -3451,7 +3457,7 @@ func (s *testDBSuite2) TestLock(c *C) {
 
 // port from mysql
 // https://github.com/mysql/mysql-server/blob/4f1d7cf5fcb11a3f84cff27e37100d7295e7d5ca/mysql-test/t/tablelock.test
-func (s *testDBSuite2) TestTableLock(c *C) {
+func (s *testDBSuite6) TestTableLock(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk := s.tk
 	tk.MustExec("use test")
@@ -3486,7 +3492,7 @@ func (s *testDBSuite2) TestTableLock(c *C) {
 
 // port from mysql
 // https://github.com/mysql/mysql-server/blob/4f1d7cf5fcb11a3f84cff27e37100d7295e7d5ca/mysql-test/t/lock_tables_lost_commit.test
-func (s *testDBSuite2) TestTableLocksLostCommit(c *C) {
+func (s *testDBSuite6) TestTableLocksLostCommit(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk2 := testkit.NewTestKit(c, s.store)
 	tk := s.tk
@@ -3510,7 +3516,7 @@ func (s *testDBSuite2) TestTableLocksLostCommit(c *C) {
 }
 
 // test write local lock
-func (s *testDBSuite2) TestWriteLocal(c *C) {
+func (s *testDBSuite6) TestWriteLocal(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk2 := testkit.NewTestKit(c, s.store)
 	tk := s.tk
@@ -3559,7 +3565,7 @@ func (s *testDBSuite2) TestWriteLocal(c *C) {
 	tk2.MustExec("unlock tables")
 }
 
-func (s *testDBSuite2) TestSkipSchemaChecker(c *C) {
+func (s *testDBSuite6) TestSkipSchemaChecker(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk := s.tk
 	tk.MustExec("use test")
