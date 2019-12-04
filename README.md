@@ -84,5 +84,6 @@ for details on submitting patches and the contribution workflow.
 TiDB is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
 
 ## Acknowledgments
+
 - Thanks [cznic](https://github.com/cznic) for providing some great open source tools.
 - Thanks [GolevelDB](https://github.com/syndtr/goleveldb), [BoltDB](https://github.com/boltdb/bolt), and [RocksDB](https://github.com/facebook/rocksdb) for their powerful storage engines.
