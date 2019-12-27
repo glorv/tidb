@@ -38,7 +38,24 @@ const (
 	NormalTable Type = iota
 	// VirtualTable , store no data, just extract data from the memory struct.
 	VirtualTable
+	// ClusterTable , contain the `VirtualTable` in the all cluster tidb nodes.
+	ClusterTable
 )
+
+// IsNormalTable checks whether the table is a normal table type.
+func (tp Type) IsNormalTable() bool {
+	return tp == NormalTable
+}
+
+// IsVirtualTable checks whether the table is a virtual table type.
+func (tp Type) IsVirtualTable() bool {
+	return tp == VirtualTable
+}
+
+// IsClusterTable checks whether the table is a cluster table type.
+func (tp Type) IsClusterTable() bool {
+	return tp == ClusterTable
+}
 
 const (
 	// DirtyTableAddRow is the constant for dirty table operation type.
@@ -124,8 +141,14 @@ type Table interface {
 	// Row returns a row for all columns.
 	Row(ctx sessionctx.Context, h int64) ([]types.Datum, error)
 
-	// Cols returns the columns of the table which is used in select.
+	// Cols returns the columns of the table which is used in select, including hidden columns.
 	Cols() []*Column
+
+	// VisibleCols returns the columns of the table which is used in select, excluding hidden columns.
+	VisibleCols() []*Column
+
+	// HiddenCols returns the hidden columns of the table.
+	HiddenCols() []*Column
 
 	// WritableCols returns columns of the table in writable states.
 	// Writable states includes Public, WriteOnly, WriteOnlyReorganization.
@@ -164,11 +187,14 @@ type Table interface {
 	// AllocHandle allocates a handle for a new row.
 	AllocHandle(ctx sessionctx.Context) (int64, error)
 
-	// AllocHandleIds allocates multiple handle for rows.
+	// AllocHandleIDs allocates multiple handle for rows.
 	AllocHandleIDs(ctx sessionctx.Context, n uint64) (int64, int64, error)
 
 	// Allocator returns Allocator.
-	Allocator(ctx sessionctx.Context) autoid.Allocator
+	Allocator(ctx sessionctx.Context, allocatorType autoid.AllocatorType) autoid.Allocator
+
+	// AllAllocators returns all allocators.
+	AllAllocators(ctx sessionctx.Context) autoid.Allocators
 
 	// RebaseAutoID rebases the auto_increment ID base.
 	// If allocIDs is true, it will allocate some IDs and save to the cache.
@@ -191,7 +217,7 @@ func AllocAutoIncrementValue(ctx context.Context, t Table, sctx sessionctx.Conte
 		span1 := span.Tracer().StartSpan("table.AllocAutoIncrementValue", opentracing.ChildOf(span.Context()))
 		defer span1.Finish()
 	}
-	_, max, err := t.Allocator(sctx).Alloc(t.Meta().ID, uint64(1))
+	_, max, err := t.Allocator(sctx, autoid.RowIDAllocType).Alloc(t.Meta().ID, uint64(1))
 	if err != nil {
 		return 0, err
 	}
@@ -204,7 +230,7 @@ func AllocBatchAutoIncrementValue(ctx context.Context, t Table, sctx sessionctx.
 		span1 := span.Tracer().StartSpan("table.AllocBatchAutoIncrementValue", opentracing.ChildOf(span.Context()))
 		defer span1.Finish()
 	}
-	return t.Allocator(sctx).Alloc(t.Meta().ID, uint64(N))
+	return t.Allocator(sctx, autoid.RowIDAllocType).Alloc(t.Meta().ID, uint64(N))
 }
 
 // PhysicalTable is an abstraction for two kinds of table representation: partition or non-partitioned table.
@@ -225,7 +251,7 @@ type PartitionedTable interface {
 
 // TableFromMeta builds a table.Table from *model.TableInfo.
 // Currently, it is assigned to tables.TableFromMeta in tidb package's init function.
-var TableFromMeta func(alloc autoid.Allocator, tblInfo *model.TableInfo) (Table, error)
+var TableFromMeta func(allocators autoid.Allocators, tblInfo *model.TableInfo) (Table, error)
 
 // MockTableFromMeta only serves for test.
 var MockTableFromMeta func(tableInfo *model.TableInfo) Table

@@ -48,10 +48,14 @@ var _ = Suite(&testStateChangeSuite{})
 var _ = SerialSuites(&serialTestStateChangeSuite{})
 
 type serialTestStateChangeSuite struct {
-	testStateChangeSuite
+	testStateChangeSuiteBase
 }
 
 type testStateChangeSuite struct {
+	testStateChangeSuiteBase
+}
+
+type testStateChangeSuiteBase struct {
 	lease  time.Duration
 	store  kv.Storage
 	dom    *domain.Domain
@@ -60,7 +64,7 @@ type testStateChangeSuite struct {
 	preSQL string
 }
 
-func (s *testStateChangeSuite) SetUpSuite(c *C) {
+func (s *testStateChangeSuiteBase) SetUpSuite(c *C) {
 	s.lease = 200 * time.Millisecond
 	ddl.WaitTimeWhenErrorOccured = 1 * time.Microsecond
 	var err error
@@ -78,7 +82,7 @@ func (s *testStateChangeSuite) SetUpSuite(c *C) {
 	s.p = parser.New()
 }
 
-func (s *testStateChangeSuite) TearDownSuite(c *C) {
+func (s *testStateChangeSuiteBase) TearDownSuite(c *C) {
 	s.se.Execute(context.Background(), "drop database if exists test_db_state")
 	s.se.Close()
 	s.dom.Close()
@@ -233,14 +237,14 @@ func (s *testStateChangeSuite) TestTwoStates(c *C) {
 	// Fill the SQLs and expected error messages.
 	testInfo.sqlInfos[0].sql = "insert into t (c1, c2, c3, c4) value(2, 'b', 'N', '2017-07-02')"
 	testInfo.sqlInfos[1].sql = "insert into t (c1, c2, c3, d3, c4) value(3, 'b', 'N', 'a', '2017-07-03')"
-	unknownColErr := errors.New("unknown column d3")
+	unknownColErr := "[planner:1054]Unknown column 'd3' in 'field list'"
 	testInfo.sqlInfos[1].cases[0].expectedCompileErr = unknownColErr
 	testInfo.sqlInfos[1].cases[1].expectedCompileErr = unknownColErr
 	testInfo.sqlInfos[1].cases[2].expectedCompileErr = unknownColErr
 	testInfo.sqlInfos[1].cases[3].expectedCompileErr = unknownColErr
 	testInfo.sqlInfos[2].sql = "update t set c2 = 'c2_update'"
 	testInfo.sqlInfos[3].sql = "replace into t values(5, 'e', 'N', '2017-07-05')"
-	testInfo.sqlInfos[3].cases[4].expectedCompileErr = errors.New("Column count doesn't match value count at row 1")
+	testInfo.sqlInfos[3].cases[4].expectedCompileErr = "[planner:1136]Column count doesn't match value count at row 1"
 	alterTableSQL := "alter table t add column d3 enum('a', 'b') not null default 'a' after c3"
 	s.test(c, "", alterTableSQL, testInfo)
 	// TODO: Add more DDL statements.
@@ -332,8 +336,8 @@ type stateCase struct {
 	session            session.Session
 	rawStmt            ast.StmtNode
 	stmt               sqlexec.Statement
-	expectedExecErr    error
-	expectedCompileErr error
+	expectedExecErr    string
+	expectedCompileErr string
 }
 
 type sqlInfo struct {
@@ -402,10 +406,10 @@ func (t *testExecInfo) compileSQL(idx int) (err error) {
 			return errors.Trace(err)
 		}
 		c.stmt, err = compiler.Compile(ctx, c.rawStmt)
-		if c.expectedCompileErr != nil {
+		if c.expectedCompileErr != "" {
 			if err == nil {
 				err = errors.Errorf("expected error %s but got nil", c.expectedCompileErr)
-			} else if strings.Contains(err.Error(), c.expectedCompileErr.Error()) {
+			} else if err.Error() == c.expectedCompileErr {
 				err = nil
 			}
 		}
@@ -419,14 +423,14 @@ func (t *testExecInfo) compileSQL(idx int) (err error) {
 func (t *testExecInfo) execSQL(idx int) error {
 	for _, sqlInfo := range t.sqlInfos {
 		c := sqlInfo.cases[idx]
-		if c.expectedCompileErr != nil {
+		if c.expectedCompileErr != "" {
 			continue
 		}
 		_, err := c.stmt.Exec(context.TODO())
-		if c.expectedExecErr != nil {
+		if c.expectedExecErr != "" {
 			if err == nil {
 				err = errors.Errorf("expected error %s but got nil", c.expectedExecErr)
-			} else if strings.Contains(err.Error(), c.expectedExecErr.Error()) {
+			} else if err.Error() == c.expectedExecErr {
 				err = nil
 			}
 		}
@@ -541,7 +545,7 @@ func (s *testStateChangeSuite) TestDeleteOnly(c *C) {
 	s.runTestInSchemaState(c, model.StateDeleteOnly, "", dropColumnSQL, sqls, nil)
 }
 
-func (s *testStateChangeSuite) runTestInSchemaState(c *C, state model.SchemaState, tableName, alterTableSQL string,
+func (s *testStateChangeSuiteBase) runTestInSchemaState(c *C, state model.SchemaState, tableName, alterTableSQL string,
 	sqlWithErrs []sqlWithErr, expectQuery *expectQuery) {
 	_, err := s.se.Execute(context.Background(), `create table t (
 		c1 varchar(64),
@@ -599,7 +603,7 @@ func (s *testStateChangeSuite) runTestInSchemaState(c *C, state model.SchemaStat
 	}
 }
 
-func (s *testStateChangeSuite) execQuery(tk *testkit.TestKit, sql string, args ...interface{}) (*testkit.Result, error) {
+func (s *testStateChangeSuiteBase) execQuery(tk *testkit.TestKit, sql string, args ...interface{}) (*testkit.Result, error) {
 	comment := Commentf("sql:%s, args:%v", sql, args)
 	rs, err := tk.Exec(sql, args...)
 	if err != nil {
@@ -618,7 +622,7 @@ func checkResult(result *testkit.Result, expected [][]interface{}) error {
 	return nil
 }
 
-func (s *testStateChangeSuite) CheckResult(tk *testkit.TestKit, sql string, args ...interface{}) (*testkit.Result, error) {
+func (s *testStateChangeSuiteBase) CheckResult(tk *testkit.TestKit, sql string, args ...interface{}) (*testkit.Result, error) {
 	comment := Commentf("sql:%s, args:%v", sql, args)
 	rs, err := tk.Exec(sql, args...)
 	if err != nil {
@@ -671,7 +675,7 @@ func (s *testStateChangeSuite) TestShowIndex(c *C) {
 	c.Assert(err, IsNil)
 
 	_, err = s.se.Execute(context.Background(), `create table tr(
-		id int, name varchar(50), 
+		id int, name varchar(50),
 		purchased date
 	)
 	partition by range( year(purchased) ) (
@@ -836,7 +840,7 @@ func (s *testStateChangeSuite) TestParallelCreateAndRename(c *C) {
 
 type checkRet func(c *C, err1, err2 error)
 
-func (s *testStateChangeSuite) testControlParallelExecSQL(c *C, sql1, sql2 string, f checkRet) {
+func (s *testStateChangeSuiteBase) testControlParallelExecSQL(c *C, sql1, sql2 string, f checkRet) {
 	_, err := s.se.Execute(context.Background(), "use test_db_state")
 	c.Assert(err, IsNil)
 	_, err = s.se.Execute(context.Background(), "create table t(a int, b int, c int, d int auto_increment,e int, index idx1(d), index idx2(d,e))")
