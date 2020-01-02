@@ -106,6 +106,8 @@ var _ = Suite(&testSuiteAgg{baseTestSuite: &baseTestSuite{}})
 var _ = Suite(&testSuite6{&baseTestSuite{}})
 var _ = Suite(&testSuite7{&baseTestSuite{}})
 var _ = Suite(&testSuite8{&baseTestSuite{}})
+var _ = Suite(&testSuite9{&baseTestSuite{}})
+var _ = Suite(&testSuite0{&baseTestSuite{}})
 var _ = SerialSuites(&testShowStatsSuite{&baseTestSuite{}})
 var _ = Suite(&testBypassSuite{})
 var _ = Suite(&testUpdateSuite{})
@@ -3458,7 +3460,7 @@ func (s *testSuite3) TestYearTypeDeleteIndex(c *C) {
 	tk.MustExec("admin check table t")
 }
 
-func (s *testSuite3) TestForSelectScopeInUnion(c *C) {
+func (s *testSuite9) TestForSelectScopeInUnion(c *C) {
 	// A union B for update, the "for update" option belongs to union statement, so
 	// it should works on both A and B.
 	tk1 := testkit.NewTestKit(c, s.store)
@@ -3540,7 +3542,7 @@ func (s *testSuite3) TestUnsignedDecimalOverflow(c *C) {
 	r.Check(testkit.Rows("0.00"))
 }
 
-func (s *testSuite3) TestIndexJoinTableDualPanic(c *C) {
+func (s *testSuite9) TestIndexJoinTableDualPanic(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists a")
@@ -3590,7 +3592,7 @@ func (s *testSuite3) TestUnionAutoSignedCast(c *C) {
 		Check(testkit.Rows("1 1", "2 -1", "3 -1"))
 }
 
-func (s *testSuite3) TestUpdateJoin(c *C) {
+func (s *testSuite9) TestUpdateJoin(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t1, t2, t3, t4, t5, t6, t7")
@@ -3683,7 +3685,7 @@ func (s *testSuite3) TestMaxOneRow(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *testSuite3) TestCurrentTimestampValueSelection(c *C) {
+func (s *testSuite9) TestCurrentTimestampValueSelection(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t,t1")
@@ -3739,7 +3741,7 @@ func (s *testSuite3) TestRowID(c *C) {
 	tk.MustQuery("select *, _tidb_rowid from t use index(`primary`) where _tidb_rowid=1").Check(testkit.Rows("a 1"))
 }
 
-func (s *testSuite3) TestDoSubquery(c *C) {
+func (s *testSuite9) TestDoSubquery(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec(`use test`)
 	tk.MustExec(`drop table if exists t`)
@@ -3767,7 +3769,7 @@ func (s *testSuite3) TestTSOFail(c *C) {
 	c.Assert(failpoint.Disable("github.com/pingcap/tidb/session/mockGetTSFail"), IsNil)
 }
 
-func (s *testSuite3) TestSelectHashPartitionTable(c *C) {
+func (s *testSuite9) TestSelectHashPartitionTable(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec(`use test`)
 	tk.MustExec(`drop table if exists th`)
@@ -3887,7 +3889,11 @@ type testSuite3 struct {
 	*baseTestSuite
 }
 
-func (s *testSuite3) TearDownTest(c *C) {
+type testSuite9 struct {
+	*baseTestSuite
+}
+
+func (s *testSuite9) TearDownTest(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	r := tk.MustQuery("show full tables")
@@ -3903,6 +3909,24 @@ func (s *testSuite3) TearDownTest(c *C) {
 
 type testSuite4 struct {
 	*baseTestSuite
+}
+
+type testSuite0 struct {
+	*baseTestSuite
+}
+
+func (s *testSuite0) TearDownTest(c *C) {
+	tk := testkit.NewTestKit(c, s.store)
+	tk.MustExec("use test")
+	r := tk.MustQuery("show full tables")
+	for _, tb := range r.Rows() {
+		tableName := tb[0]
+		if tb[1] == "VIEW" {
+			tk.MustExec(fmt.Sprintf("drop view %v", tableName))
+		} else {
+			tk.MustExec(fmt.Sprintf("drop table %v", tableName))
+		}
+	}
 }
 
 func (s *testSuite4) TearDownTest(c *C) {

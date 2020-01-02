@@ -103,7 +103,7 @@ func (s *testSuite3) TestCopClientSend(c *C) {
 	c.Check(checkGoroutineExists(keyword), IsFalse)
 }
 
-func (s *testSuite3) TestGetLackHandles(c *C) {
+func (s *testSuite9) TestGetLackHandles(c *C) {
 	expectedHandles := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 	handlesMap := make(map[int64]struct{})
 	for _, h := range expectedHandles {
@@ -135,7 +135,7 @@ func (s *testSuite3) TestBigIntPK(c *C) {
 	tk.MustQuery("select * from t use index(idx) order by a").Check(testkit.Rows("1 1 1", "9223372036854775807 2 2"))
 }
 
-func (s *testSuite3) TestCorColToRanges(c *C) {
+func (s *testSuite9) TestCorColToRanges(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("set sql_mode='STRICT_TRANS_TABLES'") // disable only-full-group-by
@@ -177,7 +177,7 @@ func (s *testSuite3) TestUniqueKeyNullValueSelect(c *C) {
 }
 
 // TestIssue10178 contains tests for https://github.com/pingcap/tidb/issues/10178 .
-func (s *testSuite3) TestIssue10178(c *C) {
+func (s *testSuite9) TestIssue10178(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
@@ -238,7 +238,7 @@ func (s *testSuite3) TestInconsistentIndex(c *C) {
 	}
 }
 
-func (s *testSuite3) TestPushLimitDownIndexLookUpReader(c *C) {
+func (s *testSuite9) TestPushLimitDownIndexLookUpReader(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists tbl")

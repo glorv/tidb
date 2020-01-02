@@ -313,7 +313,7 @@ func (s *testSuiteP2) TestMultiBatch(c *C) {
 	tk.MustExec("admin check table t")
 }
 
-func (s *testSuite4) TestInsertAutoInc(c *C) {
+func (s *testSuite0) TestInsertAutoInc(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	createSQL := `drop table if exists insert_autoinc_test; create table insert_autoinc_test (id int primary key auto_increment, c1 int);`
@@ -560,7 +560,7 @@ commit;`
 	tk.MustQuery(testSQL).Check(testkit.Rows("0"))
 }
 
-func (s *testSuite4) TestInsertOnDup(c *C) {
+func (s *testSuite0) TestInsertOnDup(c *C) {
 	var cfg kv.InjectionConfig
 	tk := testkit.NewTestKit(c, kv.NewInjectedStore(s.store, &cfg))
 	tk.MustExec("use test")
@@ -748,7 +748,7 @@ func (s *testSuite4) TestInsertIgnoreOnDup(c *C) {
 	r.Check(testkit.Rows("1 1", "2 2"))
 }
 
-func (s *testSuite4) TestInsertSetWithDefault(c *C) {
+func (s *testSuite0) TestInsertSetWithDefault(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	// Assign `DEFAULT` in `INSERT ... SET ...` statement
@@ -830,7 +830,7 @@ func (s *testSuite4) TestInsertOnDupUpdateDefault(c *C) {
 	tk.MustExec("drop table t1, t2")
 }
 
-func (s *testSuite4) TestReplace(c *C) {
+func (s *testSuite0) TestReplace(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	testSQL := `drop table if exists replace_test;
@@ -1191,7 +1191,7 @@ func (s *testSuite4) TestPartitionedTableReplace(c *C) {
 	r.Check(testkit.Rows("111 2"))
 }
 
-func (s *testSuite4) TestHashPartitionedTableReplace(c *C) {
+func (s *testSuite0) TestHashPartitionedTableReplace(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("set @@session.tidb_enable_table_partition = '1';")
@@ -1658,7 +1658,7 @@ func (s *testSuite4) TestPartitionedTableUpdate(c *C) {
 }
 
 // TestUpdateCastOnlyModifiedValues for issue #4514.
-func (s *testSuite4) TestUpdateCastOnlyModifiedValues(c *C) {
+func (s *testSuite0) TestUpdateCastOnlyModifiedValues(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("create table update_modified (col_1 int, col_2 enum('a', 'b'))")
@@ -1693,7 +1693,7 @@ func (s *testSuite4) TestUpdateCastOnlyModifiedValues(c *C) {
 	r.Check(testkit.Rows(`{"a": "测试"}`))
 }
 
-func (s *testSuite4) fillMultiTableForUpdate(tk *testkit.TestKit) {
+func (s *testSuite0) fillMultiTableForUpdate(tk *testkit.TestKit) {
 	// Create and fill table items
 	tk.MustExec("CREATE TABLE items (id int, price TEXT);")
 	tk.MustExec(`insert into items values (11, "items_price_11"), (12, "items_price_12"), (13, "items_price_13");`)
@@ -1704,7 +1704,7 @@ func (s *testSuite4) fillMultiTableForUpdate(tk *testkit.TestKit) {
 	tk.CheckExecResult(3, 0)
 }
 
-func (s *testSuite4) TestMultipleTableUpdate(c *C) {
+func (s *testSuite0) TestMultipleTableUpdate(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	s.fillMultiTableForUpdate(tk)
@@ -1865,7 +1865,7 @@ func (s *testSuite4) TestPartitionedTableDelete(c *C) {
 	tk.MustExec(`drop table t1;`)
 }
 
-func (s *testSuite4) fillDataMultiTable(tk *testkit.TestKit) {
+func (s *testSuite0) fillDataMultiTable(tk *testkit.TestKit) {
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t1, t2, t3")
 	// Create and fill table t1
@@ -1882,7 +1882,7 @@ func (s *testSuite4) fillDataMultiTable(tk *testkit.TestKit) {
 	tk.CheckExecResult(3, 0)
 }
 
-func (s *testSuite4) TestMultiTableDelete(c *C) {
+func (s *testSuite0) TestMultiTableDelete(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	s.fillDataMultiTable(tk)
 
@@ -1931,7 +1931,7 @@ func (s *testSuite4) TestQualifiedDelete(c *C) {
 	c.Assert(err, NotNil)
 }
 
-func (s *testSuite4) TestLoadDataMissingColumn(c *C) {
+func (s *testSuite0) TestLoadDataMissingColumn(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	createSQL := `create table load_data_missing (id int, t timestamp not null)`
@@ -2139,7 +2139,7 @@ func (s *testSuite4) TestLoadData(c *C) {
 	checkCases(tests, ld, c, tk, ctx, selectSQL, deleteSQL)
 }
 
-func (s *testSuite4) TestLoadDataEscape(c *C) {
+func (s *testSuite0) TestLoadDataEscape(c *C) {
 	trivialMsg := "Records: 1  Deleted: 0  Skipped: 0  Warnings: 0"
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test; drop table if exists load_data_test;")
@@ -2195,7 +2195,7 @@ func (s *testSuite4) TestLoadDataSpecifiedColumns(c *C) {
 	checkCases(tests, ld, c, tk, ctx, selectSQL, deleteSQL)
 }
 
-func (s *testSuite4) TestLoadDataIgnoreLines(c *C) {
+func (s *testSuite0) TestLoadDataIgnoreLines(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test; drop table if exists load_data_test;")
 	tk.MustExec("CREATE TABLE load_data_test (id INT NOT NULL PRIMARY KEY, value TEXT NOT NULL) CHARACTER SET utf8")
@@ -2234,7 +2234,7 @@ func (s *testSuite4) TestLoadDataOverflowBigintUnsigned(c *C) {
 	checkCases(tests, ld, c, tk, ctx, selectSQL, deleteSQL)
 }
 
-func (s *testSuite4) TestLoadDataIntoPartitionedTable(c *C) {
+func (s *testSuite0) TestLoadDataIntoPartitionedTable(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("create table range_t (a int, b int) partition by range (a) ( " +
@@ -2272,7 +2272,7 @@ func (s *testSuite4) TestNullDefault(c *C) {
 	tk.MustQuery("select * from test_null_default").Check(testkit.Rows("<nil>", "1970-01-01 08:20:34"))
 }
 
-func (s *testSuite4) TestNotNullDefault(c *C) {
+func (s *testSuite0) TestNotNullDefault(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test; drop table if exists t1,t2;")
 	defer tk.MustExec("drop table t1,t2")

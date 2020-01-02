@@ -34,7 +34,7 @@ import (
 	"github.com/pingcap/tidb/util/testutil"
 )
 
-func (s *testSuite3) TestCharsetDatabase(c *C) {
+func (s *testSuite9) TestCharsetDatabase(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	testSQL := `create database if not exists cd_test_utf8 CHARACTER SET utf8 COLLATE utf8_bin;`
 	tk.MustExec(testSQL)
@@ -59,7 +59,7 @@ func (s *testSuite3) TestDo(c *C) {
 	tk.MustQuery("select @a").Check(testkit.Rows("1"))
 }
 
-func (s *testSuite3) TestCreateRole(c *C) {
+func (s *testSuite9) TestCreateRole(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("create user testCreateRole;")
 	tk.MustExec("grant CREATE USER on *.* to testCreateRole;")
@@ -107,7 +107,7 @@ func (s *testSuite3) TestDropRole(c *C) {
 	tk.MustExec("drop user test_create_role;")
 }
 
-func (s *testSuite3) TestTransaction(c *C) {
+func (s *testSuite9) TestTransaction(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("begin")
 	ctx := tk.Se.(sessionctx.Context)
@@ -236,7 +236,7 @@ func (s *testSuite3) TestRole(c *C) {
 	tk.MustExec("SET ROLE NONE")
 }
 
-func (s *testSuite3) TestRoleAdmin(c *C) {
+func (s *testSuite9) TestRoleAdmin(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("CREATE USER 'testRoleAdmin';")
 	tk.MustExec("CREATE ROLE 'targetRole';")
@@ -311,7 +311,7 @@ func (s *testSuite3) TestDefaultRole(c *C) {
 	tk.MustExec(dropRoleSQL)
 }
 
-func (s *testSuite3) TestUser(c *C) {
+func (s *testSuite9) TestUser(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	// Make sure user test not in mysql.User.
 	result := tk.MustQuery(`SELECT Password FROM mysql.User WHERE User="test" and Host="localhost"`)
@@ -460,7 +460,7 @@ func (s *testSuite3) TestSetPwd(c *C) {
 
 }
 
-func (s *testSuite3) TestKillStmt(c *C) {
+func (s *testSuite9) TestKillStmt(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("kill 1")
@@ -524,7 +524,7 @@ func (s *testFlushSuite) TestFlushPrivilegesPanic(c *C) {
 	config.StoreGlobalConfig(saveConf)
 }
 
-func (s *testSuite3) TestDropStats(c *C) {
+func (s *testSuite9) TestDropStats(c *C) {
 	testKit := testkit.NewTestKit(c, s.store)
 	testKit.MustExec("use test")
 	testKit.MustExec("create table t (c1 int, c2 int)")
@@ -567,7 +567,7 @@ func (s *testSuite3) TestFlushTables(c *C) {
 
 }
 
-func (s *testSuite3) TestUseDB(c *C) {
+func (s *testSuite9) TestUseDB(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	_, err := tk.Exec("USE test")
 	c.Check(err, IsNil)
@@ -606,7 +606,7 @@ func (s *testSuite3) TestStmtAutoNewTxn(c *C) {
 	tk.MustQuery("select * from auto_new").Check(testkit.Rows("1", "2"))
 }
 
-func (s *testSuite3) TestIssue9111(c *C) {
+func (s *testSuite9) TestIssue9111(c *C) {
 	// CREATE USER / DROP USER fails if admin doesn't have insert privilege on `mysql.user` table.
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("create user 'user_admin'@'localhost';")

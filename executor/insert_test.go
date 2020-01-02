@@ -203,7 +203,7 @@ func (s *testSuite3) TestUpdateDuplicateKey(c *C) {
 	c.Assert(err.Error(), Equals, "[kv:1062]Duplicate entry '1-2-4' for key 'PRIMARY'")
 }
 
-func (s *testSuite3) TestInsertWrongValueForField(c *C) {
+func (s *testSuite9) TestInsertWrongValueForField(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec(`drop table if exists t1;`)
@@ -227,7 +227,7 @@ func (s *testSuite3) TestInsertDateTimeWithTimeZone(c *C) {
 	))
 }
 
-func (s *testSuite3) TestInsertZeroYear(c *C) {
+func (s *testSuite9) TestInsertZeroYear(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec(`drop table if exists t1;`)
@@ -292,7 +292,7 @@ func (s *testSuite3) TestAllowInvalidDates(c *C) {
 	runWithMode("ALLOW_INVALID_DATES")
 }
 
-func (s *testSuite3) TestInsertWithAutoidSchema(c *C) {
+func (s *testSuite9) TestInsertWithAutoidSchema(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec(`use test`)
 	tk.MustExec(`create table t1(id int primary key auto_increment, n int);`)
@@ -747,7 +747,7 @@ func (s *testSuite3) TestPartitionInsertOnDuplicate(c *C) {
 	tk.MustQuery("select * from t3").Check(testkit.Rows("1 2 3 4 16"))
 }
 
-func (s *testSuite3) TestBit(c *C) {
+func (s *testSuite9) TestBit(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec(`use test`)
 	tk.MustExec(`create table t1 (a bit(3))`)
@@ -802,7 +802,7 @@ func (s *testSuite3) TestAllocateContinuousRowID(c *C) {
 	wg.Wait()
 }
 
-func (s *testSuite3) TestJiraIssue5366(c *C) {
+func (s *testSuite9) TestJiraIssue5366(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec(`use test`)
 	tk.MustExec(`create table bug (a varchar(100))`)

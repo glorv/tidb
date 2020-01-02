@@ -61,7 +61,7 @@ func (s *testSuite3) TestGrantGlobal(c *C) {
 	}
 }
 
-func (s *testSuite3) TestGrantDBScope(c *C) {
+func (s *testSuite9) TestGrantDBScope(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	// Create a new user.
 	createUserSQL := `CREATE USER 'testDB'@'localhost' IDENTIFIED BY '123';`
@@ -111,7 +111,7 @@ func (s *testSuite3) TestWithGrantOption(c *C) {
 	tk.MustQuery("SELECT grant_priv FROM mysql.user WHERE User=\"testWithGrant1\"").Check(testkit.Rows("Y"))
 }
 
-func (s *testSuite3) TestTableScope(c *C) {
+func (s *testSuite9) TestTableScope(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	// Create a new user.
 	createUserSQL := `CREATE USER 'testTbl'@'localhost' IDENTIFIED BY '123';`
@@ -189,7 +189,7 @@ func (s *testSuite3) TestColumnScope(c *C) {
 	}
 }
 
-func (s *testSuite3) TestIssue2456(c *C) {
+func (s *testSuite9) TestIssue2456(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("CREATE USER 'dduser'@'%' IDENTIFIED by '123456';")
 	tk.MustExec("GRANT ALL PRIVILEGES ON `dddb_%`.* TO 'dduser'@'%';")
@@ -205,7 +205,7 @@ func (s *testSuite3) TestNoAutoCreateUser(c *C) {
 	c.Assert(terror.ErrorEqual(err, executor.ErrCantCreateUserWithGrant), IsTrue)
 }
 
-func (s *testSuite3) TestCreateUserWhenGrant(c *C) {
+func (s *testSuite9) TestCreateUserWhenGrant(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec(`DROP USER IF EXISTS 'test'@'%'`)
 	// This only applies to sql_mode:NO_AUTO_CREATE_USER off
@@ -227,7 +227,7 @@ func (s *testSuite3) TestIssue2654(c *C) {
 	rows.Check(testkit.Rows(`test %`))
 }
 
-func (s *testSuite3) TestGrantUnderANSIQuotes(c *C) {
+func (s *testSuite9) TestGrantUnderANSIQuotes(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	// Fix a bug that the GrantExec fails in ANSI_QUOTES sql mode
 	// The bug is caused by the improper usage of double quotes like:
