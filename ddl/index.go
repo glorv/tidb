@@ -948,11 +948,11 @@ func (w *addIndexWorker) batchCheckUniqueKey(txn kv.Transaction, idxRecords []*i
 // backfillIndexInTxn will add w.batchCnt indices once, default value of w.batchCnt is 128.
 // TODO: make w.batchCnt can be modified by system variable.
 func (w *addIndexWorker) backfillIndexInTxn(handleRange reorgIndexTask) (taskCtx addIndexTaskContext, errInTxn error) {
-	failpoint.Inject("errorMockPanic", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("errorMockPanic")); ok {
 		if val.(bool) {
 			panic("panic test")
 		}
-	})
+	}
 
 	oprStartTime := time.Now()
 	errInTxn = kv.RunInNewTxn(w.sessCtx.GetStore(), true, func(txn kv.Transaction) error {
@@ -1073,13 +1073,13 @@ func (w *addIndexWorker) run(d *ddlCtx) {
 		}
 
 		logutil.BgLogger().Debug("[ddl] add index worker got task", zap.Int("workerID", w.id), zap.String("task", task.String()))
-		failpoint.Inject("mockAddIndexErr", func() {
+		if _, ok := failpoint.Eval(_curpkg_("mockAddIndexErr")); ok {
 			if w.id == 0 {
 				result := &addIndexResult{addedCount: 0, nextHandle: 0, err: errors.Errorf("mock add index error")}
 				w.resultCh <- result
-				failpoint.Continue()
+				continue
 			}
-		})
+		}
 
 		// Dynamic change batch size.
 		w.batchCnt = int(variable.GetDDLReorgBatchSize())
@@ -1348,21 +1348,21 @@ func (w *worker) addPhysicalTableIndex(t table.PhysicalTable, indexInfo *model.I
 			closeAddIndexWorkers(workers)
 		}
 
-		failpoint.Inject("checkIndexWorkerNum", func(val failpoint.Value) {
+		if val, ok := failpoint.Eval(_curpkg_("checkIndexWorkerNum")); ok {
 			if val.(bool) {
 				num := int(atomic.LoadInt32(&TestCheckWorkerNumber))
 				if num != 0 {
 					if num > len(kvRanges) {
 						if len(idxWorkers) != len(kvRanges) {
-							failpoint.Return(errors.Errorf("check index worker num error, len kv ranges is: %v, check index worker num is: %v, actual index num is: %v", len(kvRanges), num, len(idxWorkers)))
+							return errors.Errorf("check index worker num error, len kv ranges is: %v, check index worker num is: %v, actual index num is: %v", len(kvRanges), num, len(idxWorkers))
 						}
 					} else if num != len(idxWorkers) {
-						failpoint.Return(errors.Errorf("check index worker num error, len kv ranges is: %v, check index worker num is: %v, actual index num is: %v", len(kvRanges), num, len(idxWorkers)))
+						return errors.Errorf("check index worker num error, len kv ranges is: %v, check index worker num is: %v, actual index num is: %v", len(kvRanges), num, len(idxWorkers))
 					}
 					TestCheckWorkerNumCh <- struct{}{}
 				}
 			}
-		})
+		}
 
 		logutil.BgLogger().Info("[ddl] start add index workers to reorg index", zap.Int("workerCnt", len(idxWorkers)),
 			zap.Int("regionCnt", len(kvRanges)), zap.Int64("startHandle", startHandle), zap.Int64("endHandle", endHandle))
@@ -1427,7 +1427,7 @@ func (w *worker) updateReorgInfo(t table.PartitionedTable, reorg *reorgInfo) (bo
 		return true, nil
 	}
 
-	failpoint.Inject("mockUpdateCachedSafePoint", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("mockUpdateCachedSafePoint")); ok {
 		if val.(bool) {
 			// 18 is for the logical time.
 			ts := oracle.GetPhysical(time.Now()) << 18
@@ -1435,7 +1435,7 @@ func (w *worker) updateReorgInfo(t table.PartitionedTable, reorg *reorgInfo) (bo
 			s.UpdateSPCache(uint64(ts), time.Now())
 			time.Sleep(time.Millisecond * 3)
 		}
-	})
+	}
 	currentVer, err := getValidCurrentVersion(reorg.d.store)
 	if err != nil {
 		return false, errors.Trace(err)

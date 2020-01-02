@@ -246,9 +246,9 @@ func (pc PbConverter) scalarFuncToPBExpr(expr *ScalarFunction) *tipb.Expr {
 	// Check whether this function has ProtoBuf signature.
 	pbCode := expr.Function.PbCode()
 	if pbCode <= tipb.ScalarFuncSig_Unspecified {
-		failpoint.Inject("PanicIfPbCodeUnspecified", func() {
+		if _, ok := failpoint.Eval(_curpkg_("PanicIfPbCodeUnspecified")); ok {
 			panic(errors.Errorf("unspecified PbCode: %T", expr.Function))
-		})
+		}
 		return nil
 	}
 
@@ -311,7 +311,7 @@ func (pc PbConverter) canFuncBePushed(sf *ScalarFunction) bool {
 	// Use the failpoint to control whether to push down an expression in the integration test.
 	// Push down all expression if the `failpoint expression` is `all`, otherwise, check
 	// whether scalar function's name is contained in the enabled expression list (e.g.`ne,eq,lt`).
-	failpoint.Inject("PushDownTestSwitcher", func(val failpoint.Value) bool {
+	if val, ok := failpoint.Eval(_curpkg_("PushDownTestSwitcher")); ok {
 		enabled := val.(string)
 		if enabled == "all" {
 			return true
@@ -323,7 +323,7 @@ func (pc PbConverter) canFuncBePushed(sf *ScalarFunction) bool {
 			}
 		}
 		return false
-	})
+	}
 
 	switch sf.FuncName.L {
 	case

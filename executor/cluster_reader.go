@@ -109,12 +109,12 @@ func (e *clusterConfigRetriever) retrieve(_ context.Context, sctx sessionctx.Con
 		err  error
 	}
 	serversInfo, err := infoschema.GetClusterServerInfo(sctx)
-	failpoint.Inject("mockClusterConfigServerInfo", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("mockClusterConfigServerInfo")); ok {
 		if s := val.(string); len(s) > 0 {
 			// erase the error
 			serversInfo, err = parseFailpointServerInfo(s), nil
 		}
-	})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -427,13 +427,13 @@ func (h *logResponseHeap) Pop() interface{} {
 func (e *clusterLogRetriever) startRetrieving(ctx context.Context, sctx sessionctx.Context) ([]chan logStreamResult, error) {
 	isFailpointTestMode := false
 	serversInfo, err := infoschema.GetClusterServerInfo(sctx)
-	failpoint.Inject("mockClusterLogServerInfo", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("mockClusterLogServerInfo")); ok {
 		if s := val.(string); len(s) > 0 {
 			// erase the error
 			serversInfo, err = parseFailpointServerInfo(s), nil
 		}
 		isFailpointTestMode = true
-	})
+	}
 	if err != nil {
 		return nil, err
 	}

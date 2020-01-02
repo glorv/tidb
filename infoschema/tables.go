@@ -1996,7 +1996,7 @@ type ServerInfo struct {
 
 // GetClusterServerInfo returns all components information of cluster
 func GetClusterServerInfo(ctx sessionctx.Context) ([]ServerInfo, error) {
-	failpoint.Inject("mockClusterInfo", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("mockClusterInfo")); ok {
 		// The cluster topology is injected by `failpoint` expression and
 		// there is no extra checks for it. (let the test fail if the expression invalid)
 		if s := val.(string); len(s) > 0 {
@@ -2011,9 +2011,9 @@ func GetClusterServerInfo(ctx sessionctx.Context) ([]ServerInfo, error) {
 					GitHash:    parts[4],
 				})
 			}
-			failpoint.Return(servers, nil)
+			return servers, nil
 		}
-	})
+	}
 
 	type retriever func(ctx sessionctx.Context) ([]ServerInfo, error)
 	var servers []ServerInfo

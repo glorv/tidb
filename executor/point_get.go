@@ -130,14 +130,14 @@ func (e *PointGetExecutor) Next(ctx context.Context, req *chunk.Chunk) error {
 		// 2. Session B create an UPDATE query to update the record that will be obtained in step 1
 		// 3. Then point get retrieve data from backend after step 2 finished
 		// 4. Check the result
-		failpoint.InjectContext(ctx, "pointGetRepeatableReadTest-step1", func() {
+		if _, ok := failpoint.EvalContext(ctx, _curpkg_("pointGetRepeatableReadTest-step1")); ok {
 			if ch, ok := ctx.Value("pointGetRepeatableReadTest").(chan struct{}); ok {
 				// Make `UPDATE` continue
 				close(ch)
 			}
 			// Wait `UPDATE` finished
-			failpoint.InjectContext(ctx, "pointGetRepeatableReadTest-step2", nil)
-		})
+			failpoint.EvalContext(ctx, _curpkg_("pointGetRepeatableReadTest-step2"))
+		}
 	}
 
 	key := tablecodec.EncodeRowKeyWithHandle(e.tblInfo.ID, e.handle)

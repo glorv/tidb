@@ -836,12 +836,12 @@ func (w *GCWorker) resolveLocksForRange(ctx context.Context, safePoint uint64, s
 	var stat tikv.RangeTaskStat
 	key := startKey
 	bo := tikv.NewBackoffer(ctx, tikv.GcResolveLockMaxBackoff)
-	failpoint.Inject("setGcResolveMaxBackoff", func(v failpoint.Value) {
+	if v, ok := failpoint.Eval(_curpkg_("setGcResolveMaxBackoff")); ok {
 		sleep := v.(int)
 		// cooperate with github.com/pingcap/tidb/store/tikv/invalidCacheAndRetry
 		ctx = context.WithValue(ctx, "injectedBackoff", struct{}{})
 		bo = tikv.NewBackoffer(ctx, sleep)
-	})
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -909,10 +909,10 @@ func (w *GCWorker) resolveLocksForRange(ctx context.Context, safePoint uint64, s
 			break
 		}
 		bo = tikv.NewBackoffer(ctx, tikv.GcResolveLockMaxBackoff)
-		failpoint.Inject("setGcResolveMaxBackoff", func(v failpoint.Value) {
+		if v, ok := failpoint.Eval(_curpkg_("setGcResolveMaxBackoff")); ok {
 			sleep := v.(int)
 			bo = tikv.NewBackoffer(ctx, sleep)
-		})
+		}
 	}
 	return stat, nil
 }

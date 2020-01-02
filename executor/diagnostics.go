@@ -75,7 +75,7 @@ func (e *inspectionRetriever) retrieve(ctx context.Context, sctx sessionctx.Cont
 	sctx.GetSessionVars().InspectionTableCache = map[string]variable.TableSnapshot{}
 	defer func() { sctx.GetSessionVars().InspectionTableCache = nil }()
 
-	failpoint.InjectContext(ctx, "mockMergeMockInspectionTables", func() {
+	if _, ok := failpoint.EvalContext(ctx, _curpkg_("mockMergeMockInspectionTables")); ok {
 		// Merge mock snapshots injected from failpoint for test purpose
 		mockTables, ok := ctx.Value("__mockInspectionTables").(map[string]variable.TableSnapshot)
 		if ok {
@@ -83,7 +83,7 @@ func (e *inspectionRetriever) retrieve(ctx context.Context, sctx sessionctx.Cont
 				sctx.GetSessionVars().InspectionTableCache[strings.ToLower(name)] = snap
 			}
 		}
-	})
+	}
 
 	rules := e.extractor.Rules
 	items := e.extractor.Items

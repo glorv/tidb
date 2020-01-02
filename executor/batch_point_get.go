@@ -136,14 +136,14 @@ func (e *BatchPointGetExec) initialize(ctx context.Context) error {
 		// 2. Session B create an UPDATE query to update the record that will be obtained in step 1
 		// 3. Then point get retrieve data from backend after step 2 finished
 		// 4. Check the result
-		failpoint.InjectContext(ctx, "batchPointGetRepeatableReadTest-step1", func() {
+		if _, ok := failpoint.EvalContext(ctx, _curpkg_("batchPointGetRepeatableReadTest-step1")); ok {
 			if ch, ok := ctx.Value("batchPointGetRepeatableReadTest").(chan struct{}); ok {
 				// Make `UPDATE` continue
 				close(ch)
 			}
 			// Wait `UPDATE` finished
-			failpoint.InjectContext(ctx, "batchPointGetRepeatableReadTest-step2", nil)
-		})
+			failpoint.EvalContext(ctx, _curpkg_("batchPointGetRepeatableReadTest-step2"))
+		}
 	}
 
 	keys := make([]kv.Key, len(e.handles))

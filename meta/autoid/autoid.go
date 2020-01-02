@@ -269,11 +269,11 @@ func (alloc *allocator) GetType() AllocatorType {
 
 // NextStep return new auto id step according to previous step and consuming time.
 func NextStep(curStep int64, consumeDur time.Duration) int64 {
-	failpoint.Inject("mockAutoIDChange", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("mockAutoIDChange")); ok {
 		if val.(bool) {
-			failpoint.Return(step)
+			return step
 		}
-	})
+	}
 
 	consumeRate := defaultConsumeTime.Seconds() / consumeDur.Seconds()
 	res := int64(float64(curStep) * consumeRate)

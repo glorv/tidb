@@ -43,9 +43,9 @@ func EncodePlan(p Plan) string {
 	if selectPlan == nil {
 		return ""
 	}
-	failpoint.Inject("mockPlanRowCount", func(val failpoint.Value) {
+	if val, ok := failpoint.Eval(_curpkg_("mockPlanRowCount")); ok {
 		selectPlan.statsInfo().RowCount = float64(val.(int))
-	})
+	}
 	return pn.encodePlanTree(selectPlan)
 }
 

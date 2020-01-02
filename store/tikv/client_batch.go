@@ -240,16 +240,16 @@ func (c *batchCommandsClient) send(request *tikvpb.BatchCommandsRequest, entries
 }
 
 func (c *batchCommandsClient) recv() (*tikvpb.BatchCommandsResponse, error) {
-	failpoint.Inject("gotErrorInRecvLoop", func(_ failpoint.Value) (*tikvpb.BatchCommandsResponse, error) {
+	if _, ok := failpoint.Eval(_curpkg_("gotErrorInRecvLoop")); ok {
 		return nil, errors.New("injected error in batchRecvLoop")
-	})
+	}
 	// When `conn.Close()` is called, `client.Recv()` will return an error.
 	return c.client.Recv()
 }
 
 // `failPendingRequests` must be called in locked contexts in order to avoid double closing channels.
 func (c *batchCommandsClient) failPendingRequests(err error) {
-	failpoint.Inject("panicInFailPendingRequests", nil)
+	failpoint.Eval(_curpkg_("panicInFailPendingRequests"))
 	c.batched.Range(func(key, value interface{}) bool {
 		id, _ := key.(uint64)
 		entry, _ := value.(*batchCommandsEntry)
