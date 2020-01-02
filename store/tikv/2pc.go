@@ -482,12 +482,12 @@ func (c *twoPhaseCommitter) buildPrewriteRequest(batch batchKeys, txnSize uint64
 		minCommitTS = c.startTS + 1
 	}
 
-	if val, ok := failpoint.Eval(_curpkg_("mockZeroCommitTS")); ok {
+	failpoint.Inject("mockZeroCommitTS", func(val failpoint.Value) {
 		// Should be val.(uint64) but failpoint doesn't support that.
 		if tmp, ok := val.(int); ok && uint64(tmp) == c.startTS {
 			minCommitTS = 0
 		}
-	}
+	})
 
 	req := &pb.PrewriteRequest{
 		Mutations:         mutations,
@@ -698,10 +698,10 @@ func (action actionPessimisticLock) handleSingleBatch(c *twoPhaseCommitter, bo *
 				req.PessimisticLock().WaitTimeout = timeLeft
 			}
 		}
-		if _, ok := failpoint.Eval(_curpkg_("PessimisticLockErrWriteConflict")); ok {
+		failpoint.Inject("PessimisticLockErrWriteConflict", func() error {
 			time.Sleep(300 * time.Millisecond)
 			return kv.ErrWriteConflict
-		}
+		})
 		resp, err := c.store.SendReq(bo, req, batch.region, readTimeoutShort)
 		if err != nil {
 			return errors.Trace(err)

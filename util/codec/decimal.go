@@ -39,11 +39,11 @@ func valueSizeOfDecimal(dec *types.MyDecimal, precision, frac int) int {
 
 // DecodeDecimal decodes bytes to decimal.
 func DecodeDecimal(b []byte) ([]byte, *types.MyDecimal, int, int, error) {
-	if val, ok := failpoint.Eval(_curpkg_("errorInDecodeDecimal")); ok {
+	failpoint.Inject("errorInDecodeDecimal", func(val failpoint.Value) {
 		if val.(bool) {
-			return b, nil, 0, 0, errors.New("gofail error")
+			failpoint.Return(b, nil, 0, 0, errors.New("gofail error"))
 		}
-	}
+	})
 
 	if len(b) < 3 {
 		return b, nil, 0, 0, errors.New("insufficient bytes to decode value")

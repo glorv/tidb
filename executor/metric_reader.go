@@ -74,9 +74,9 @@ func (e *MetricRetriever) retrieve(ctx context.Context, sctx sessionctx.Context)
 }
 
 func (e *MetricRetriever) queryMetric(ctx context.Context, sctx sessionctx.Context, queryRange promv1.Range, quantile float64) (pmodel.Value, error) {
-	if _, ok := failpoint.EvalContext(ctx, _curpkg_("mockMetricRetrieverQueryPromQL")); ok {
-		return ctx.Value("__mockMetricsData").(pmodel.Matrix), nil
-	}
+	failpoint.InjectContext(ctx, "mockMetricRetrieverQueryPromQL", func() {
+		failpoint.Return(ctx.Value("__mockMetricsData").(pmodel.Matrix), nil)
+	})
 
 	addr, err := e.getMetricAddr(sctx)
 	if err != nil {

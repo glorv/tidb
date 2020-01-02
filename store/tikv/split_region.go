@@ -104,13 +104,13 @@ func (s *tikvStore) splitBatchRegionsReq(bo *Backoffer, keys [][]byte, scatter b
 }
 
 func (s *tikvStore) batchSendSingleRegion(bo *Backoffer, batch batch, scatter bool) singleBatchResp {
-	if val, ok := failpoint.Eval(_curpkg_("MockSplitRegionTimeout")); ok {
+	failpoint.Inject("MockSplitRegionTimeout", func(val failpoint.Value) {
 		if val.(bool) {
 			if _, ok := bo.ctx.Deadline(); ok {
 				<-bo.ctx.Done()
 			}
 		}
-	}
+	})
 
 	req := tikvrpc.NewRequest(tikvrpc.CmdSplitRegion, &kvrpcpb.SplitRegionRequest{
 		SplitKeys: batch.keys,
@@ -208,11 +208,11 @@ func (s *tikvStore) SplitRegions(ctx context.Context, splitKeys [][]byte, scatte
 }
 
 func (s *tikvStore) scatterRegion(regionID uint64) error {
-	if val, ok := failpoint.Eval(_curpkg_("MockScatterRegionTimeout")); ok {
+	failpoint.Inject("MockScatterRegionTimeout", func(val failpoint.Value) {
 		if val.(bool) {
-			return ErrPDServerTimeout
+			failpoint.Return(ErrPDServerTimeout)
 		}
-	}
+	})
 
 	logutil.BgLogger().Info("start scatter region",
 		zap.Uint64("regionID", regionID))

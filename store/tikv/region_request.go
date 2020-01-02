@@ -88,24 +88,24 @@ func (s *RegionRequestSender) SendReqCtx(
 	rpcCtx *RPCContext,
 	err error,
 ) {
-	if val, ok := failpoint.Eval(_curpkg_("tikvStoreSendReqResult")); ok {
+	failpoint.Inject("tikvStoreSendReqResult", func(val failpoint.Value) {
 		switch val.(string) {
 		case "timeout":
-			return nil, nil, errors.New("timeout")
+			failpoint.Return(nil, nil, errors.New("timeout"))
 		case "GCNotLeader":
 			if req.Type == tikvrpc.CmdGC {
-				return &tikvrpc.Response{
+				failpoint.Return(&tikvrpc.Response{
 					Resp: &kvrpcpb.GCResponse{RegionError: &errorpb.Error{NotLeader: &errorpb.NotLeader{}}},
-				}, nil, nil
+				}, nil, nil)
 			}
 		case "GCServerIsBusy":
 			if req.Type == tikvrpc.CmdGC {
-				return &tikvrpc.Response{
+				failpoint.Return(&tikvrpc.Response{
 					Resp: &kvrpcpb.GCResponse{RegionError: &errorpb.Error{ServerIsBusy: &errorpb.ServerIsBusy{}}},
-				}, nil, nil
+				}, nil, nil)
 			}
 		}
-	}
+	})
 
 	var replicaRead kv.ReplicaReadType
 	if req.ReplicaRead {
@@ -130,13 +130,13 @@ func (s *RegionRequestSender) SendReqCtx(
 		if err != nil {
 			return nil, nil, err
 		}
-		if _, ok := failpoint.Eval(_curpkg_("invalidCacheAndRetry")); ok {
+		failpoint.Inject("invalidCacheAndRetry", func() {
 			// cooperate with github.com/pingcap/tidb/store/tikv/gcworker/setGcResolveMaxBackoff
 			if c := bo.ctx.Value("injectedBackoff"); c != nil {
 				resp, err = tikvrpc.GenRegionErrorResp(req, &errorpb.Error{EpochNotMatch: &errorpb.EpochNotMatch{}})
-				return resp, nil, err
+				failpoint.Return(resp, nil, err)
 			}
-		}
+		})
 		if rpcCtx == nil {
 			// If the region is not found in cache, it must be out
 			// of date and already be cleaned up. We can skip the
