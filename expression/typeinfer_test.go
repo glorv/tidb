@@ -30,7 +30,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-var _ = SerialSuites(&testInferTypeSuite{})
+var _ = Suite(&testInferTypeSuite{})
 
 type typeInferTestCase struct {
 	sql     string
