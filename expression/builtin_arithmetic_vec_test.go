@@ -146,7 +146,7 @@ var vecBuiltinArithmeticCases = map[string][]vecExprBenchCase{
 	ast.NE: {},
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinArithmeticFunc(c *C) {
+func (s *testVectorizeSuite1) TestVectorizedBuiltinArithmeticFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinArithmeticCases)
 }
 

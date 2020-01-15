@@ -133,15 +133,15 @@ var vecBuiltinMathCases1 = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinMathEvalOneVec(c *C) {
+func (s *testVectorizeSuite2) TestVectorizedBuiltinMathEvalOneVec(c *C) {
 	testVectorizedEvalOneVec(c, vecBuiltinMathCases)
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinMathFunc(c *C) {
+func (s *testVectorizeSuite2) TestVectorizedBuiltinMathFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinMathCases)
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinMathFuncForRand(c *C) {
+func (s *testVectorizeSuite2) TestVectorizedBuiltinMathFuncForRand(c *C) {
 	testVectorizedBuiltinFuncForRand(c, vecBuiltinMathCases1)
 }
 

@@ -32,7 +32,7 @@ var vecBuiltinLikeCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinLikeFunc(c *C) {
+func (s *testVectorizeSuite2) TestVectorizedBuiltinLikeFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinLikeCases)
 }
 

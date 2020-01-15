@@ -401,11 +401,11 @@ var vecBuiltinTimeCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinTimeEvalOneVec(c *C) {
+func (s *testVectorizeSuite2) TestVectorizedBuiltinTimeEvalOneVec(c *C) {
 	testVectorizedEvalOneVec(c, vecBuiltinTimeCases)
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinTimeFunc(c *C) {
+func (s *testVectorizeSuite2) TestVectorizedBuiltinTimeFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinTimeCases)
 }
 
@@ -417,7 +417,7 @@ func BenchmarkVectorizedBuiltinTimeFunc(b *testing.B) {
 	benchmarkVectorizedBuiltinFunc(b, vecBuiltinTimeCases)
 }
 
-func (s *testVectorizeSuite) TestVecMonth(c *C) {
+func (s *testVectorizeSuite2) TestVecMonth(c *C) {
 	ctx := mock.NewContext()
 	ctx.GetSessionVars().SQLMode |= mysql.ModeNoZeroDate
 	input := chunk.New([]*types.FieldType{types.NewFieldType(mysql.TypeDatetime)}, 3, 3)

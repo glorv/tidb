@@ -113,7 +113,7 @@ var vecBuiltinJSONCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testVectorizeSuite) TestVectorizedBuiltinJSONFunc(c *C) {
+func (s *testVectorizeSuite1) TestVectorizedBuiltinJSONFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinJSONCases)
 }
 
