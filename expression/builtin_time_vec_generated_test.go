@@ -6729,11 +6729,11 @@ var vecBuiltinTimeGeneratedCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testVectorizeSuite2) TestVectorizedBuiltinTimeEvalOneVecGenerated(c *C) {
+func (s *testVectorizeSuite3) TestVectorizedBuiltinTimeEvalOneVecGenerated(c *C) {
 	testVectorizedEvalOneVec(c, vecBuiltinTimeGeneratedCases)
 }
 
-func (s *testVectorizeSuite2) TestVectorizedBuiltinTimeFuncGenerated(c *C) {
+func (s *testVectorizeSuite3) TestVectorizedBuiltinTimeFuncGenerated(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinTimeGeneratedCases)
 }
 

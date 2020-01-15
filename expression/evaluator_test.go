@@ -36,6 +36,7 @@ var _ = SerialSuites(&testEvaluatorSerialSuites{})
 var _ = Suite(&testEvaluatorSuite{})
 var _ = Suite(&testVectorizeSuite1{})
 var _ = Suite(&testVectorizeSuite2{})
+var _ = Suite(&testVectorizeSuite3{})
 
 func TestT(t *testing.T) {
 	testleak.BeforeTest()
@@ -60,6 +61,14 @@ type testVectorizeSuite1 struct {
 }
 
 type testVectorizeSuite2 struct {
+	testEvaluatorSuiteBase
+}
+
+type testVectorizeSuite3 struct {
+	testEvaluatorSuiteBase
+}
+
+type testVectorizeSuite4 struct {
 	testEvaluatorSuiteBase
 }
 
