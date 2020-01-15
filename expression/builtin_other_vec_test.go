@@ -41,7 +41,7 @@ var vecBuiltinOtherCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinOtherFunc(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinOtherFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinOtherCases)
 }
 
@@ -49,7 +49,7 @@ func BenchmarkVectorizedBuiltinOtherFunc(b *testing.B) {
 	benchmarkVectorizedBuiltinFunc(b, vecBuiltinOtherCases)
 }
 
-func (s *testEvaluatorSuite) TestInDecimal(c *C) {
+func (s *testVectorizeSuite) TestInDecimal(c *C) {
 	ctx := mock.NewContext()
 	ft := eType2FieldType(types.ETDecimal)
 	col0 := &Column{RetType: ft, Index: 0}

@@ -111,7 +111,7 @@ var vecBuiltinInfoCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinInfoFunc(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinInfoFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinInfoCases)
 }
 

@@ -147,7 +147,7 @@ func makeBinaryLogicOpDataGeners() []dataGenerator {
 		makeGivenValsOrDefaultGener(arg1s, types.ETInt)}
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinOpFunc(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinOpFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinOpCases)
 }
 
@@ -155,7 +155,7 @@ func BenchmarkVectorizedBuiltinOpFunc(b *testing.B) {
 	benchmarkVectorizedBuiltinFunc(b, vecBuiltinOpCases)
 }
 
-func (s *testEvaluatorSuite) TestBuiltinUnaryMinusIntSig(c *C) {
+func (s *testVectorizeSuite) TestBuiltinUnaryMinusIntSig(c *C) {
 	ctx := mock.NewContext()
 	ft := eType2FieldType(types.ETInt)
 	col0 := &Column{RetType: ft, Index: 0}

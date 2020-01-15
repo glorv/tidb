@@ -113,11 +113,11 @@ var vecBuiltinControlCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinControlEvalOneVecGenerated(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinControlEvalOneVecGenerated(c *C) {
 	testVectorizedEvalOneVec(c, vecBuiltinControlCases)
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinControlFuncGenerated(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinControlFuncGenerated(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinControlCases)
 }
 

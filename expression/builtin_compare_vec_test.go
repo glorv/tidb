@@ -149,11 +149,11 @@ var vecBuiltinCompareCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinCompareEvalOneVec(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinCompareEvalOneVec(c *C) {
 	testVectorizedEvalOneVec(c, vecBuiltinCompareCases)
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinCompareFunc(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinCompareFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinCompareCases)
 }
 

@@ -93,11 +93,11 @@ var vecBuiltinMiscellaneousCases = map[string][]vecExprBenchCase{
 	},
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinMiscellaneousEvalOneVec(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinMiscellaneousEvalOneVec(c *C) {
 	testVectorizedEvalOneVec(c, vecBuiltinMiscellaneousCases)
 }
 
-func (s *testEvaluatorSuite) TestVectorizedBuiltinMiscellaneousFunc(c *C) {
+func (s *testVectorizeSuite) TestVectorizedBuiltinMiscellaneousFunc(c *C) {
 	testVectorizedBuiltinFunc(c, vecBuiltinMiscellaneousCases)
 }
 
