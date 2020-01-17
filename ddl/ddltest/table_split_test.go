@@ -140,14 +140,6 @@ func (tc *TestDDLCallback) OnWatched(ctx context.Context) {
 	tc.BaseCallback.OnWatched(ctx)
 }
 
-type DDLForTest interface {
-	// SetHook sets the hook.
-	SetHook(h ddl.Callback)
-	// SetInterceptoror sets the interceptor.
-	SetInterceptoror(h ddl.Interceptor)
-}
-
-
 type TestInterceptor struct {
 	*ddl.BaseInterceptor
 

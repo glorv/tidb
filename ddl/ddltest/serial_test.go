@@ -375,8 +375,8 @@ func (s *testSerialSuite) TestCancelAddIndexPanic(c *C) {
 		}
 	}
 	origHook := s.dom.DDL().GetHook()
-	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
-	s.dom.DDL().(DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
+	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
 	rs, err := tk.Exec("alter table t add index idx_c2(c2)")
 	if rs != nil {
 		rs.Close()
@@ -545,8 +545,8 @@ func (s *testSerialSuite) TestRecoverTableByJobIDFail(c *C) {
 		}
 	}
 	origHook := s.dom.DDL().GetHook()
-	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
-	s.dom.DDL().(DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
+	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
 
 	// do recover table.
 	tk.MustExec(fmt.Sprintf("recover table by job %d", jobID))
@@ -605,8 +605,8 @@ func (s *testSerialSuite) TestRecoverTableByTableNameFail(c *C) {
 		}
 	}
 	origHook := s.dom.DDL().GetHook()
-	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
-	s.dom.DDL().(DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
+	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
 
 	// do recover table.
 	tk.MustExec("recover table t_recover")
@@ -662,8 +662,8 @@ func (s *testSerialSuite) TestCanceledJobTakeTime(c *C) {
 		})
 	}
 	origHook := s.dom.DDL().GetHook()
-	s.dom.DDL().(DDLForTest).SetHook(hook)
-	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
+	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
 
 	originalWT := ddl.WaitTimeWhenErrorOccured
 	ddl.WaitTimeWhenErrorOccured = 1 * time.Second

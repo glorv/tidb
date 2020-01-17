@@ -155,8 +155,8 @@ func (s *testStateChangeSuite) TestShowCreateTable(c *C) {
 	}
 	d := s.dom.DDL()
 	originalCallback := d.GetHook()
-	defer d.(DDLForTest).SetHook(originalCallback)
-	d.(DDLForTest).SetHook(callback)
+	defer d.(ddl.DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(callback)
 	for _, tc := range testCases {
 		tk.MustExec(tc.sql)
 		c.Assert(checkErr, IsNil)
@@ -202,7 +202,7 @@ func (s *testStateChangeSuite) TestDropNotNullColumn(c *C) {
 		}
 	}
 
-	d.(DDLForTest).SetHook(callback)
+	d.(ddl.DDLForTest).SetHook(callback)
 	tk.MustExec("alter table t drop column a")
 	c.Assert(checkErr, IsNil)
 	sqlNum++
@@ -214,7 +214,7 @@ func (s *testStateChangeSuite) TestDropNotNullColumn(c *C) {
 	sqlNum++
 	tk.MustExec("alter table t3 drop column d")
 	c.Assert(checkErr, IsNil)
-	d.(DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(originalCallback)
 	tk.MustExec("drop table t, t1, t2, t3")
 }
 
@@ -318,8 +318,8 @@ func (s *testStateChangeSuite) test(c *C, tableName, alterTableSQL string, testI
 	}
 	d := s.dom.DDL()
 	originalCallback := d.GetHook()
-	defer d.(DDLForTest).SetHook(originalCallback)
-	d.(DDLForTest).SetHook(callback)
+	defer d.(ddl.DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(callback)
 	_, err = s.se.Execute(context.Background(), alterTableSQL)
 	c.Assert(err, IsNil)
 	err = testInfo.compileSQL(4)
@@ -587,11 +587,11 @@ func (s *testStateChangeSuiteBase) runTestInSchemaState(c *C, state model.Schema
 	}
 	d := s.dom.DDL()
 	originalCallback := d.GetHook()
-	d.(DDLForTest).SetHook(callback)
+	d.(ddl.DDLForTest).SetHook(callback)
 	_, err = s.se.Execute(context.Background(), alterTableSQL)
 	c.Assert(err, IsNil)
 	c.Assert(errors.ErrorStack(checkErr), Equals, "")
-	d.(DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(originalCallback)
 
 	if expectQuery != nil {
 		tk := testkit.NewTestKit(c, s.store)
@@ -660,7 +660,7 @@ func (s *testStateChangeSuite) TestShowIndex(c *C) {
 
 	d := s.dom.DDL()
 	originalCallback := d.GetHook()
-	d.(DDLForTest).SetHook(callback)
+	d.(ddl.DDLForTest).SetHook(callback)
 	alterTableSQL := `alter table t add index c2(c2)`
 	_, err = s.se.Execute(context.Background(), alterTableSQL)
 	c.Assert(err, IsNil)
@@ -670,7 +670,7 @@ func (s *testStateChangeSuite) TestShowIndex(c *C) {
 	c.Assert(err, IsNil)
 	err = checkResult(result, testkit.Rows("t 0 PRIMARY 1 c1 A 0 <nil> <nil>  BTREE  ", "t 1 c2 1 c2 A 0 <nil> <nil> YES BTREE  "))
 	c.Assert(err, IsNil)
-	d.(DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(originalCallback)
 
 	c.Assert(err, IsNil)
 
@@ -894,8 +894,8 @@ func (s *testStateChangeSuiteBase) testControlParallelExecSQL(c *C, sql1, sql2 s
 	}
 	d := s.dom.DDL()
 	originalCallback := d.GetHook()
-	defer d.(DDLForTest).SetHook(originalCallback)
-	d.(DDLForTest).SetHook(callback)
+	defer d.(ddl.DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(callback)
 
 	wg := sync.WaitGroup{}
 	var err1 error
@@ -969,8 +969,8 @@ func (s *testStateChangeSuite) testParallelExecSQL(c *C, sql string) {
 
 	d := s.dom.DDL()
 	originalCallback := d.GetHook()
-	defer d.(DDLForTest).SetHook(originalCallback)
-	d.(DDLForTest).SetHook(callback)
+	defer d.(ddl.DDLForTest).SetHook(originalCallback)
+	d.(ddl.DDLForTest).SetHook(callback)
 
 	wg.Add(2)
 	go func() {
@@ -1103,7 +1103,7 @@ func (s *testStateChangeSuite) TestParallelDDLBeforeRunDDLJob(c *C) {
 		return info
 	}
 	d := s.dom.DDL()
-	d.(DDLForTest).SetInterceptoror(intercept)
+	d.(ddl.DDLForTest).SetInterceptoror(intercept)
 
 	// Make sure the connection 1 executes a SQL before the connection 2.
 	// And the connection 2 executes a SQL with an outdated information schema.
@@ -1129,7 +1129,7 @@ func (s *testStateChangeSuite) TestParallelDDLBeforeRunDDLJob(c *C) {
 	wg.Wait()
 
 	intercept = &TestInterceptor{}
-	d.(DDLForTest).SetInterceptoror(intercept)
+	d.(ddl.DDLForTest).SetInterceptoror(intercept)
 }
 
 func (s *testStateChangeSuite) TestParallelAlterSchemaCharsetAndCollate(c *C) {

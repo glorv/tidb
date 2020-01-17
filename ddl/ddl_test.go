@@ -38,29 +38,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type DDLForTest interface {
-	// SetHook sets the hook.
-	SetHook(h Callback)
-	// SetInterceptoror sets the interceptor.
-	SetInterceptoror(h Interceptor)
-}
-
-// SetHook implements DDL.SetHook interface.
-func (d *ddl) SetHook(h Callback) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	d.mu.hook = h
-}
-
-// SetInterceptoror implements DDL.SetInterceptoror interface.
-func (d *ddl) SetInterceptoror(i Interceptor) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	d.mu.interceptor = i
-}
-
 // generalWorker returns the general worker.
 func (d *ddl) generalWorker() *worker {
 	return d.workers[generalWorker]
