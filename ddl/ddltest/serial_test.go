@@ -341,7 +341,7 @@ func (s *testSerialSuite) TestCancelAddIndexPanic(c *C) {
 	oldReorgWaitTimeout := ddl.ReorgWaitTimeout
 	ddl.ReorgWaitTimeout = 50 * time.Millisecond
 	defer func() { ddl.ReorgWaitTimeout = oldReorgWaitTimeout }()
-	hook := &ddl.TestDDLCallback{}
+	hook := &TestDDLCallback{}
 	hook.OnJobRunBeforeExported = func(job *model.Job) {
 		if job.Type == model.ActionAddIndex && job.State == model.JobStateRunning && job.SchemaState == model.StateWriteReorganization && job.SnapshotVer != 0 {
 			jobIDs := []int64{job.ID}
@@ -375,8 +375,8 @@ func (s *testSerialSuite) TestCancelAddIndexPanic(c *C) {
 		}
 	}
 	origHook := s.dom.DDL().GetHook()
-	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
-	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
+	s.dom.DDL().(DDLForTest).SetHook(hook)
 	rs, err := tk.Exec("alter table t add index idx_c2(c2)")
 	if rs != nil {
 		rs.Close()
@@ -537,7 +537,7 @@ func (s *testSerialSuite) TestRecoverTableByJobIDFail(c *C) {
 	tk.MustExec(fmt.Sprintf(safePointSQL, timeBeforeDrop))
 
 	// set hook
-	hook := &ddl.TestDDLCallback{}
+	hook := &TestDDLCallback{}
 	hook.OnJobRunBeforeExported = func(job *model.Job) {
 		if job.Type == model.ActionRecoverTable {
 			c.Assert(failpoint.Enable("github.com/pingcap/tidb/store/tikv/mockCommitError", `return(true)`), IsNil)
@@ -545,8 +545,8 @@ func (s *testSerialSuite) TestRecoverTableByJobIDFail(c *C) {
 		}
 	}
 	origHook := s.dom.DDL().GetHook()
-	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
-	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
+	s.dom.DDL().(DDLForTest).SetHook(hook)
 
 	// do recover table.
 	tk.MustExec(fmt.Sprintf("recover table by job %d", jobID))
@@ -597,7 +597,7 @@ func (s *testSerialSuite) TestRecoverTableByTableNameFail(c *C) {
 	tk.MustExec(fmt.Sprintf(safePointSQL, timeBeforeDrop))
 
 	// set hook
-	hook := &ddl.TestDDLCallback{}
+	hook := &TestDDLCallback{}
 	hook.OnJobRunBeforeExported = func(job *model.Job) {
 		if job.Type == model.ActionRecoverTable {
 			c.Assert(failpoint.Enable("github.com/pingcap/tidb/store/tikv/mockCommitError", `return(true)`), IsNil)
@@ -605,8 +605,8 @@ func (s *testSerialSuite) TestRecoverTableByTableNameFail(c *C) {
 		}
 	}
 	origHook := s.dom.DDL().GetHook()
-	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
-	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
+	s.dom.DDL().(DDLForTest).SetHook(hook)
 
 	// do recover table.
 	tk.MustExec("recover table t_recover")
@@ -650,7 +650,7 @@ func (s *testSerialSuite) TestCanceledJobTakeTime(c *C) {
 	tk.MustExec("use test")
 	tk.MustExec("create table t_cjtt(a int)")
 
-	hook := &ddl.TestDDLCallback{}
+	hook := &TestDDLCallback{}
 	once := sync.Once{}
 	hook.OnJobUpdatedExported = func(job *model.Job) {
 		once.Do(func() {
@@ -662,8 +662,8 @@ func (s *testSerialSuite) TestCanceledJobTakeTime(c *C) {
 		})
 	}
 	origHook := s.dom.DDL().GetHook()
-	s.dom.DDL().(ddl.DDLForTest).SetHook(hook)
-	defer s.dom.DDL().(ddl.DDLForTest).SetHook(origHook)
+	s.dom.DDL().(DDLForTest).SetHook(hook)
+	defer s.dom.DDL().(DDLForTest).SetHook(origHook)
 
 	originalWT := ddl.WaitTimeWhenErrorOccured
 	ddl.WaitTimeWhenErrorOccured = 1 * time.Second

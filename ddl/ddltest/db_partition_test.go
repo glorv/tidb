@@ -736,6 +736,13 @@ func (s *testIntegrationSuite4) TestAddPartitionTooManyPartitions(c *C) {
 	tk.MustGetErrCode(sql3, tmysql.ErrTooManyPartitions)
 }
 
+const (
+	// waitForCleanDataRound indicates how many times should we check data is cleaned or not.
+	waitForCleanDataRound = 150
+	// waitForCleanDataInterval is a min duration between 2 check for data clean.
+	waitForCleanDataInterval = time.Millisecond * 100
+)
+
 func checkPartitionDelRangeDone(c *C, s *testIntegrationSuite, partitionPrefix kv.Key) bool {
 	hasOldPartitionData := true
 	for i := 0; i < waitForCleanDataRound; i++ {
@@ -1257,6 +1264,8 @@ func (s *testIntegrationSuite4) TestPartitionCancelAddIndex(c *C) {
 	testPartitionCancelAddIndex(c, s.store, s.dom.DDL(), s.lease, idxName, addIdxSQL)
 }
 
+const defaultBatchSize = 1024
+
 func testPartitionCancelAddIndex(c *C, store kv.Storage, d ddl.DDL, lease time.Duration, idxName, addIdxSQL string) {
 	tk := testkit.NewTestKit(c, store)
 
@@ -1279,7 +1288,7 @@ func testPartitionCancelAddIndex(c *C, store kv.Storage, d ddl.DDL, lease time.D
 
 	var checkErr error
 	var c3IdxInfo *model.IndexInfo
-	hook := &ddl.TestDDLCallback{}
+	hook := &TestDDLCallback{}
 	originBatchSize := tk.MustQuery("select @@global.tidb_ddl_reorg_batch_size")
 	// Set batch size to lower try to slow down add-index reorganization, This if for hook to cancel this ddl job.
 	tk.MustExec("set @@global.tidb_ddl_reorg_batch_size = 32")
@@ -1287,8 +1296,8 @@ func testPartitionCancelAddIndex(c *C, store kv.Storage, d ddl.DDL, lease time.D
 	defer tk.MustExec(fmt.Sprintf("set @@global.tidb_ddl_reorg_batch_size = %v", originBatchSize.Rows()[0][0]))
 	hook.OnJobUpdatedExported, c3IdxInfo, checkErr = backgroundExecOnJobUpdatedExported(c, store, ctx, hook, idxName)
 	originHook := d.GetHook()
-	defer d.(ddl.DDLForTest).SetHook(originHook)
-	d.(ddl.DDLForTest).SetHook(hook)
+	defer d.(DDLForTest).SetHook(originHook)
+	d.(DDLForTest).SetHook(hook)
 	done := make(chan error, 1)
 	go backgroundExec(store, addIdxSQL, done)
 
@@ -1333,7 +1342,7 @@ LOOP:
 	tk.MustExec("drop table t1")
 }
 
-func backgroundExecOnJobUpdatedExported(c *C, store kv.Storage, ctx sessionctx.Context, hook *ddl.TestDDLCallback, idxName string) (
+func backgroundExecOnJobUpdatedExported(c *C, store kv.Storage, ctx sessionctx.Context, hook *TestDDLCallback, idxName string) (
 	func(*model.Job), *model.IndexInfo, error) {
 	var checkErr error
 	first := true

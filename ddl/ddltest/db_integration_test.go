@@ -16,8 +16,11 @@ package ddl_test
 import (
 	"context"
 	"fmt"
+	"github.com/pingcap/tidb/meta/autoid"
+	"github.com/pingcap/tidb/util/testleak"
 	"strings"
 	"sync/atomic"
+	"testing"
 	"time"
 
 	. "github.com/pingcap/check"
@@ -53,6 +56,25 @@ var _ = Suite(&testIntegrationSuite4{&testIntegrationSuite{}})
 var _ = Suite(&testIntegrationSuite5{&testIntegrationSuite{}})
 var _ = Suite(&testIntegrationSuite6{&testIntegrationSuite{}})
 var _ = Suite(&testIntegrationSuite7{&testIntegrationSuite{}})
+
+func TestT(t *testing.T) {
+	*CustomParallelSuiteFlag = true
+	autoid.SetStep(5000)
+	ddl.ReorgWaitTimeout = 30 * time.Millisecond
+
+	cfg := config.GetGlobalConfig()
+	newCfg := *cfg
+	// Test for table lock.
+	newCfg.EnableTableLock = true
+	newCfg.Log.SlowThreshold = 10000
+	// Test for add/drop primary key.
+	newCfg.AlterPrimaryKey = true
+	config.StoreGlobalConfig(&newCfg)
+
+	testleak.BeforeTest()
+	TestingT(t)
+	testleak.AfterTestT(t)()
+}
 
 type testIntegrationSuite struct {
 	lease     time.Duration
