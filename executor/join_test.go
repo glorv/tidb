@@ -1337,7 +1337,7 @@ func (s *testSuiteJoin1) TestJoinDifferentDecimals(c *C) {
 	rst.Check(testkit.Rows("1 1.000", "2 2.000", "3 3.000"))
 }
 
-func (s *testSuiteJoin3) TestNullEmptyAwareSemiJoin(c *C) {
+func (s *testSuiteJoin2) TestNullEmptyAwareSemiJoin(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("drop table if exists t")
