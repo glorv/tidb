@@ -520,7 +520,7 @@ func (s *testSuiteJoin2) TestJoinCast(c *C) {
 	tk.MustExec("set @@tidb_init_chunk_size=32")
 }
 
-func (s *testSuiteJoin3) TestUsing(c *C) {
+func (s *testSuiteJoin1) TestUsing(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 
 	tk.MustExec("use test")
@@ -583,7 +583,7 @@ func (s *testSuiteJoin1) TestNaturalJoin(c *C) {
 	tk.MustQuery("select * from t1 natural right join t2 order by a").Check(testkit.Rows("1 3 2", "100 200 <nil>"))
 }
 
-func (s *testSuiteJoin3) TestMultiJoin(c *C) {
+func (s *testSuiteJoin2) TestMultiJoin(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("use test")
 	tk.MustExec("create table t35(a35 int primary key, b35 int, x35 int)")
