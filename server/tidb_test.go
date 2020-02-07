@@ -90,9 +90,6 @@ func (ts *tidbTestSuiteBase) SetUpSuite(c *C) {
 	ts.server = server
 	go ts.server.Run()
 	ts.waitUntilServerOnline()
-
-	// Run this test here because parallel would affect the result of it.
-	ts.runTestStmtCount(c)
 }
 
 func (ts *tidbTestSuiteBase) TearDownSuite(c *C) {
@@ -138,6 +135,10 @@ func (ts *tidbTestSuite) TestPreparedTimestamp(c *C) {
 func (ts *tidbTestSerialSuite) TestLoadData(c *C) {
 	c.Parallel()
 	ts.runTestLoadData(c, ts.server)
+}
+
+func (ts *tidbTestSerialSuite) TestStmtCount(c *C) {
+	ts.runTestStmtCount(c)
 }
 
 func (ts *tidbTestSuite) TestConcurrentUpdate(c *C) {
