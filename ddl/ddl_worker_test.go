@@ -42,7 +42,7 @@ type testDDLSerialSuite struct{}
 const testLease = 5 * time.Millisecond
 
 func (s *testDDLSerialSuite) SetUpSuite(c *C) {
-	WaitTimeWhenErrorOccured = 1 * time.Microsecond
+	SetWaitTimeWhenErrorOccurred(1 * time.Microsecond)
 
 	// We hope that this test is serially executed. So put it here.
 	s.testRunWorker(c)
