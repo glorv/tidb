@@ -133,7 +133,6 @@ func (ts *tidbTestSuite) TestPreparedTimestamp(c *C) {
 // this test will change `kv.TxnTotalSizeLimit` which may affect other test suites,
 // so we must make it running in serial.
 func (ts *tidbTestSerialSuite) TestLoadData(c *C) {
-	c.Parallel()
 	ts.runTestLoadData(c, ts.server)
 }
 
