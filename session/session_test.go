@@ -64,7 +64,7 @@ var (
 
 var _ = Suite(&testSessionSuite{})
 var _ = Suite(&testSessionSuite2{})
-var _ = SerialSuites(&testSchemaSuite{})
+var _ = Suite(&testSchemaSuite{})
 var _ = Suite(&testIsolationSuite{})
 var _ = SerialSuites(&testSchemaSerialSuite{})
 var _ = SerialSuites(&testSessionSerialSuite{})
@@ -177,7 +177,6 @@ func (s *testSessionSuiteBase) SetUpSuite(c *C) {
 		)
 		c.Assert(err, IsNil)
 		s.store = store
-		session.SetSchemaLease(0)
 		session.DisableStats4Test()
 	}
 
@@ -1864,7 +1863,6 @@ type testSchemaSuiteBase struct {
 	cluster   *mocktikv.Cluster
 	mvccStore mocktikv.MVCCStore
 	store     kv.Storage
-	lease     time.Duration
 	dom       *domain.Domain
 }
 
@@ -1896,8 +1894,6 @@ func (s *testSchemaSuiteBase) SetUpSuite(c *C) {
 	)
 	c.Assert(err, IsNil)
 	s.store = store
-	s.lease = 20 * time.Millisecond
-	session.SetSchemaLease(s.lease)
 	session.DisableStats4Test()
 	dom, err := session.BootstrapSession(s.store)
 	c.Assert(err, IsNil)
