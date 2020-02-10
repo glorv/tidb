@@ -151,7 +151,8 @@ func initPdAddrs() {
 	})
 }
 
-func doSetupSuite(s *testSessionSuiteBase, c *C) {
+func (s *testSessionSuiteBase) SetUpSuite(c *C) {
+	testleak.BeforeTest()
 	s.cluster = mocktikv.NewCluster()
 
 	if *withTiKV {
@@ -186,28 +187,12 @@ func doSetupSuite(s *testSessionSuiteBase, c *C) {
 	s.dom.GetGlobalVarsCache().Disable()
 }
 
-func (s *testSessionSuiteBase) SetUpSuite(c *C) {
-	testleak.BeforeTest()
-
-	// TODO: if we run `-with-tikv -check.p true` this will cause deadlock, due to
-	// https://github.com/pingcap/check/blob/8a5a85928f125d818621be7f0ee69d7207f53622/check.go#L646
-	if !*withTiKV {
-		doSetupSuite(s, c)
-	}
-}
-
 func (s *testSessionSuiteBase) TearDownSuite(c *C) {
 	s.dom.Close()
 	s.store.Close()
 	testleak.AfterTest(c)()
 	if *withTiKV {
 		pdAddrChan <- s.pdAddr
-	}
-}
-
-func (s *testSessionSuiteBase) SetUpTest(c *C) {
-	if *withTiKV && s.pdAddr == "" {
-		doSetupSuite(s, c)
 	}
 }
 
