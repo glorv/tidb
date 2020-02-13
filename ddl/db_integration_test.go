@@ -217,7 +217,7 @@ func (s *testIntegrationSuite2) TestCreateTableWithKeyWord(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *testIntegrationSuite1) TestUniqueKeyNullValue(c *C) {
+func (s *testIntegrationSuite2) TestUniqueKeyNullValue(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("USE test")
 	tk.MustExec("create table t(a int primary key, b varchar(255))")
@@ -1154,7 +1154,7 @@ func (s *testIntegrationSuite) getHistoryDDLJob(id int64) (*model.Job, error) {
 	return job, errors.Trace(err)
 }
 
-func (s *testIntegrationSuite1) TestCreateTableTooLarge(c *C) {
+func (s *testIntegrationSuite2) TestCreateTableTooLarge(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test")
 
