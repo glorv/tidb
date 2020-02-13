@@ -1159,7 +1159,7 @@ func (s *testIntegrationSuite2) TestCreateTableTooLarge(c *C) {
 	s.tk.MustExec("use test")
 
 	sql := "create table t_too_large ("
-	cnt := 3000
+	cnt := 300
 	for i := 1; i <= cnt; i++ {
 		sql += fmt.Sprintf("a%d double, b%d double, c%d double, d%d double", i, i, i, i)
 		if i != cnt {
@@ -1169,11 +1169,14 @@ func (s *testIntegrationSuite2) TestCreateTableTooLarge(c *C) {
 	sql += ");"
 	s.tk.MustGetErrCode(sql, mysql.ErrTooManyFields)
 
+	cnt = 3000
 	originLimit := atomic.LoadUint32(&ddl.TableColumnCountLimit)
 	atomic.StoreUint32(&ddl.TableColumnCountLimit, uint32(cnt*4))
 	_, err := s.tk.Exec(sql)
 	c.Assert(kv.ErrEntryTooLarge.Equal(err), IsTrue, Commentf("err:%v", err))
 	atomic.StoreUint32(&ddl.TableColumnCountLimit, originLimit)
+
+	s.tk.MustExec("drop table t_too_large")
 }
 
 func (s *testIntegrationSuite3) TestChangeColumnPosition(c *C) {
