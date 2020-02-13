@@ -728,7 +728,7 @@ func (s *testDBSuite1) TestCancelRenameIndex(c *C) {
 }
 
 // TestCancelDropTable tests cancel ddl job which type is drop table.
-func (s *testDBSuite6) TestCancelDropTableAndSchema(c *C) {
+func (s *testDBSuite2) TestCancelDropTableAndSchema(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	testCases := []struct {
 		needAddTableOrDB bool
