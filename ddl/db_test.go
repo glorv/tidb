@@ -66,7 +66,8 @@ var _ = Suite(&testDBSuite3{&testDBSuite{}})
 var _ = Suite(&testDBSuite4{&testDBSuite{}})
 var _ = Suite(&testDBSuite5{&testDBSuite{}})
 var _ = Suite(&testDBSuite6{&testDBSuite{}})
-var _ = SerialSuites(&testSerialDBSuite{&testDBSuite{}})
+
+//var _ = SerialSuites(&testSerialDBSuite{&testDBSuite{}})
 
 const defaultBatchSize = 1024
 
@@ -2847,36 +2848,36 @@ func (s *testDBSuite4) TestComment(c *C) {
 	s.tk.MustExec("drop table if exists ct, ct1")
 }
 
-func (s *testSerialDBSuite) TestRebaseAutoID(c *C) {
+func (s *testSerialSuite) TestRebaseAutoID(c *C) {
 	c.Assert(failpoint.Enable("github.com/pingcap/tidb/meta/autoid/mockAutoIDChange", `return(true)`), IsNil)
 	defer func() {
 		c.Assert(failpoint.Disable("github.com/pingcap/tidb/meta/autoid/mockAutoIDChange"), IsNil)
 	}()
-	s.tk = testkit.NewTestKit(c, s.store)
-	s.tk.MustExec("use " + s.schemaName)
+	tk := testkit.NewTestKit(c, s.store)
+	tk.MustExec("use test_db")
 
-	s.tk.MustExec("drop database if exists tidb;")
-	s.tk.MustExec("create database tidb;")
-	s.tk.MustExec("use tidb;")
-	s.tk.MustExec("create table tidb.test (a int auto_increment primary key, b int);")
-	s.tk.MustExec("insert tidb.test values (null, 1);")
-	s.tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1"))
-	s.tk.MustExec("alter table tidb.test auto_increment = 6000;")
-	s.tk.MustExec("insert tidb.test values (null, 1);")
-	s.tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1", "6000 1"))
-	s.tk.MustExec("alter table tidb.test auto_increment = 5;")
-	s.tk.MustExec("insert tidb.test values (null, 1);")
-	s.tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1", "6000 1", "11000 1"))
+	tk.MustExec("drop database if exists tidb;")
+	tk.MustExec("create database tidb;")
+	tk.MustExec("use tidb;")
+	tk.MustExec("create table tidb.test (a int auto_increment primary key, b int);")
+	tk.MustExec("insert tidb.test values (null, 1);")
+	tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1"))
+	tk.MustExec("alter table tidb.test auto_increment = 6000;")
+	tk.MustExec("insert tidb.test values (null, 1);")
+	tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1", "6000 1"))
+	tk.MustExec("alter table tidb.test auto_increment = 5;")
+	tk.MustExec("insert tidb.test values (null, 1);")
+	tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1", "6000 1", "11000 1"))
 
 	// Current range for table test is [11000, 15999].
 	// Though it does not have a tuple "a = 15999", its global next auto increment id should be 16000.
 	// Anyway it is not compatible with MySQL.
-	s.tk.MustExec("alter table tidb.test auto_increment = 12000;")
-	s.tk.MustExec("insert tidb.test values (null, 1);")
-	s.tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1", "6000 1", "11000 1", "16000 1"))
+	tk.MustExec("alter table tidb.test auto_increment = 12000;")
+	tk.MustExec("insert tidb.test values (null, 1);")
+	tk.MustQuery("select * from tidb.test").Check(testkit.Rows("1 1", "6000 1", "11000 1", "16000 1"))
 
-	s.tk.MustExec("create table tidb.test2 (a int);")
-	s.tk.MustGetErrCode("alter table tidb.test2 add column b int auto_increment key, auto_increment=10;", mysql.ErrUnsupportedDDLOperation)
+	tk.MustExec("create table tidb.test2 (a int);")
+	tk.MustGetErrCode("alter table tidb.test2 add column b int auto_increment key, auto_increment=10;", mysql.ErrUnsupportedDDLOperation)
 }
 
 func (s *testDBSuite5) TestCheckColumnDefaultValue(c *C) {
@@ -3771,14 +3772,13 @@ func (s *testDBSuite1) TestSetTableFlashReplica(c *C) {
 	c.Assert(dbInfo, IsNil)
 }
 
-func (s *testSerialDBSuite) TestAlterShardRowIDBits(c *C) {
+func (s *testSerialSuite) TestAlterShardRowIDBits(c *C) {
 	c.Assert(failpoint.Enable("github.com/pingcap/tidb/meta/autoid/mockAutoIDChange", `return(true)`), IsNil)
 	defer func() {
 		c.Assert(failpoint.Disable("github.com/pingcap/tidb/meta/autoid/mockAutoIDChange"), IsNil)
 	}()
 
-	s.tk = testkit.NewTestKit(c, s.store)
-	tk := s.tk
+	tk := testkit.NewTestKit(c, s.store)
 
 	tk.MustExec("use test")
 	// Test alter shard_row_id_bits
