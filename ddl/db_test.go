@@ -234,7 +234,7 @@ func (s *testDBSuite5) TestAddPrimaryKeyRollback1(c *C) {
 }
 
 // TestAddPrimaryKeyRollback2 is used to test scenarios that will roll back when a null primary key is encountered.
-func (s *testDBSuite1) TestAddPrimaryKeyRollback2(c *C) {
+func (s *testDBSuite6) TestAddPrimaryKeyRollback2(c *C) {
 	hasNullValsInKey := true
 	idxName := "PRIMARY"
 	addIdxSQL := "alter table t1 add primary key c3_index (c3);"
@@ -242,7 +242,7 @@ func (s *testDBSuite1) TestAddPrimaryKeyRollback2(c *C) {
 	testAddIndexRollback(c, s.store, s.lease, idxName, addIdxSQL, errMsg, hasNullValsInKey)
 }
 
-func (s *testDBSuite2) TestAddUniqueIndexRollback(c *C) {
+func (s *testDBSuite6) TestAddUniqueIndexRollback(c *C) {
 	hasNullValsInKey := false
 	idxName := "c3_index"
 	addIdxSQL := "create unique index c3_index on t1 (c3)"
