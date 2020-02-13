@@ -217,7 +217,7 @@ func (s *testIntegrationSuite2) TestCreateTableWithKeyWord(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *testIntegrationSuite2) TestUniqueKeyNullValue(c *C) {
+func (s *testIntegrationSuite1) TestUniqueKeyNullValue(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("USE test")
 	tk.MustExec("create table t(a int primary key, b varchar(255))")
