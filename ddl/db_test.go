@@ -728,7 +728,7 @@ func (s *testDBSuite1) TestCancelRenameIndex(c *C) {
 }
 
 // TestCancelDropTable tests cancel ddl job which type is drop table.
-func (s *testDBSuite2) TestCancelDropTableAndSchema(c *C) {
+func (s *testDBSuite6) TestCancelDropTableAndSchema(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	testCases := []struct {
 		needAddTableOrDB bool
@@ -1558,7 +1558,7 @@ func (s *testDBSuite5) TestCreateIndexType(c *C) {
 	s.tk.MustExec(sql)
 }
 
-func (s *testDBSuite1) TestColumn(c *C) {
+func (s *testDBSuite6) TestColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.tk.MustExec("create table t2 (c1 int, c2 int, c3 int)")
