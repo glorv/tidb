@@ -1178,8 +1178,6 @@ func (s *testIntegrationSuite6) TestCreateTableTooLarge(c *C) {
 	_, err := s.tk.Exec(genSql(cnt))
 	c.Assert(kv.ErrEntryTooLarge.Equal(err), IsTrue, Commentf("err:%v", err))
 	atomic.StoreUint32(&ddl.TableColumnCountLimit, originLimit)
-
-	s.tk.MustExec("drop table t_too_large")
 }
 
 func (s *testIntegrationSuite3) TestChangeColumnPosition(c *C) {
