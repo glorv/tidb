@@ -1270,7 +1270,7 @@ func (s *testIntegrationSuite3) TestResolveCharset(c *C) {
 	c.Assert(tbl.Meta().Charset, Equals, "binary")
 }
 
-func (s *testIntegrationSuite1) TestAddColumnTooMany(c *C) {
+func (s *testIntegrationSuite6) TestAddColumnTooMany(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test")
 	count := int(atomic.LoadUint32(&ddl.TableColumnCountLimit) - 1)
