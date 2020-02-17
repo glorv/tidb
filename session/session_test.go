@@ -160,10 +160,14 @@ func (s *testSessionSuiteBase) SetUpSuite(c *C) {
 		initStorages()
 		store := <-kvStoreChan
 		config.GetGlobalConfig().TxnLocalLatches.Enabled = false
+		s1 := time.Now()
 		err := clearStorage(store)
 		c.Assert(err, IsNil)
+		s2 := time.Now()
+		fmt.Printf("##### Clear storage cost %v\n", s2.Sub(s1))
 		err = clearETCD(store.(tikv.EtcdBackend))
 		c.Assert(err, IsNil)
+		fmt.Printf("##### Clear ETCD cost %v\n", time.Now().Sub(s2))
 		session.ResetStoreForWithTiKVTest(store)
 		s.store = store
 	} else {
