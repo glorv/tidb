@@ -56,10 +56,10 @@ import (
 )
 
 var (
-	withTiKV        = flag.Bool("with-tikv", false, "run tests with TiKV cluster started. (not use the mock server)")
-	pdAddrs         = flag.String("pd-addrs", "127.0.0.1:2379", "pd addrs")
-	pdAddrChan      chan string
-	initPdAddrsOnce sync.Once
+	withTiKV       = flag.Bool("with-tikv", false, "run tests with TiKV cluster started. (not use the mock server)")
+	pdAddrs        = flag.String("pd-addrs", "127.0.0.1:2379", "pd addrs")
+	kvStoreChan    chan kv.Storage
+	initStoresOnce sync.Once
 )
 
 var _ = Suite(&testSessionSuite{})
@@ -74,7 +74,6 @@ type testSessionSuiteBase struct {
 	mvccStore mocktikv.MVCCStore
 	store     kv.Storage
 	dom       *domain.Domain
-	pdAddr    string
 }
 
 type testSessionSuite struct {
@@ -138,14 +137,16 @@ func clearETCD(ebd tikv.EtcdBackend) error {
 	return nil
 }
 
-func initPdAddrs() {
-	initPdAddrsOnce.Do(func() {
+func initStorages() {
+	initStoresOnce.Do(func() {
 		addrs := strings.Split(*pdAddrs, ",")
-		pdAddrChan = make(chan string, len(addrs))
+		kvStoreChan = make(chan kv.Storage, len(addrs))
+		var d tikv.Driver
 		for _, addr := range addrs {
 			addr = strings.TrimSpace(addr)
 			if addr != "" {
-				pdAddrChan <- addr
+				store, _ := d.Open(fmt.Sprintf("tikv://%s", addr))
+				kvStoreChan <- store
 			}
 		}
 	})
@@ -156,13 +157,10 @@ func (s *testSessionSuiteBase) SetUpSuite(c *C) {
 	s.cluster = mocktikv.NewCluster()
 
 	if *withTiKV {
-		initPdAddrs()
-		s.pdAddr = <-pdAddrChan
-		var d tikv.Driver
+		initStorages()
+		store := <-kvStoreChan
 		config.GetGlobalConfig().TxnLocalLatches.Enabled = false
-		store, err := d.Open(fmt.Sprintf("tikv://%s", s.pdAddr))
-		c.Assert(err, IsNil)
-		err = clearStorage(store)
+		err := clearStorage(store)
 		c.Assert(err, IsNil)
 		err = clearETCD(store.(tikv.EtcdBackend))
 		c.Assert(err, IsNil)
@@ -188,11 +186,12 @@ func (s *testSessionSuiteBase) SetUpSuite(c *C) {
 
 func (s *testSessionSuiteBase) TearDownSuite(c *C) {
 	s.dom.Close()
-	s.store.Close()
-	testleak.AfterTest(c)()
 	if *withTiKV {
-		pdAddrChan <- s.pdAddr
+		kvStoreChan <- s.store
+	} else {
+		s.store.Close()
 	}
+	testleak.AfterTest(c)()
 }
 
 func (s *testSessionSuiteBase) TearDownTest(c *C) {
