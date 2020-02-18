@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	. "github.com/pingcap/check"
@@ -1569,20 +1568,20 @@ func (s *testDBSuite1) TestColumn(c *C) {
 	s.tk.MustExec("drop table t2")
 }
 
-func (s *testDBSuite1) TestAddColumnTooMany(c *C) {
-	s.tk = testkit.NewTestKit(c, s.store)
-	s.tk.MustExec("use test")
-	count := int(atomic.LoadUint32(&ddl.TableColumnCountLimit) - 1)
-	var cols []string
-	for i := 0; i < count; i++ {
-		cols = append(cols, fmt.Sprintf("a%d int", i))
-	}
-	createSQL := fmt.Sprintf("create table t_column_too_many (%s)", strings.Join(cols, ","))
-	s.tk.MustExec(createSQL)
-	s.tk.MustExec("alter table t_column_too_many add column a_512 int")
-	alterSQL := "alter table t_column_too_many add column a_513 int"
-	s.tk.MustGetErrCode(alterSQL, mysql.ErrTooManyFields)
-}
+//func (s *testDBSuite1) TestAddColumnTooMany(c *C) {
+//	s.tk = testkit.NewTestKit(c, s.store)
+//	s.tk.MustExec("use test")
+//	count := int(atomic.LoadUint32(&ddl.TableColumnCountLimit) - 1)
+//	var cols []string
+//	for i := 0; i < count; i++ {
+//		cols = append(cols, fmt.Sprintf("a%d int", i))
+//	}
+//	createSQL := fmt.Sprintf("create table t_column_too_many (%s)", strings.Join(cols, ","))
+//	s.tk.MustExec(createSQL)
+//	s.tk.MustExec("alter table t_column_too_many add column a_512 int")
+//	alterSQL := "alter table t_column_too_many add column a_513 int"
+//	s.tk.MustGetErrCode(alterSQL, mysql.ErrTooManyFields)
+//}
 
 func sessionExec(c *C, s kv.Storage, sql string) {
 	se, err := session.CreateSession4Test(s)
