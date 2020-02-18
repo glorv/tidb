@@ -1780,7 +1780,7 @@ LOOP:
 // TestDropColumn is for inserting value with a to-be-dropped column when do drop column.
 // Column info from schema in build-insert-plan should be public only,
 // otherwise they will not be consist with Table.Col(), then the server will panic.
-func (s *testDBSuite2) TestDropColumn(c *C) {
+func (s *testDBSuite6) TestDropColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("create database drop_col_db")
 	s.tk.MustExec("use drop_col_db")
