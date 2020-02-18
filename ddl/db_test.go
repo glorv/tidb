@@ -1128,7 +1128,7 @@ LOOP:
 }
 
 // TestCancelAddTableAndDropTablePartition tests cancel ddl job which type is add/drop table partition.
-func (s *testDBSuite1) TestCancelAddTableAndDropTablePartition(c *C) {
+func (s *testDBSuite6) TestCancelAddTableAndDropTablePartition(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.mustExec(c, "create database if not exists test_partition_table")
 	s.mustExec(c, "use test_partition_table")
@@ -3177,7 +3177,7 @@ LOOP:
 	s.mustExec(c, "drop table t1")
 }
 //
-func (s *testDBSuite1) TestModifyColumnNullToNotNull(c *C) {
+func (s *testDBSuite6) TestModifyColumnNullToNotNull(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk2 := testkit.NewTestKit(c, s.store)
 	tk2.MustExec("use test_db")
