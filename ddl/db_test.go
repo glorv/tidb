@@ -985,13 +985,7 @@ func testAddIndex(c *C, store kv.Storage, lease time.Duration, testPartition boo
 	start := -10
 	num := defaultBatchSize
 	// first add some rows
-	var builder strings.Builder
-	fmt.Fprintf(&builder, "insert into test_add_index values ")
-	for i := start; i < num; i++ {
-		fmt.Fprintf(&builder, "(%d, %d, %d),", i, i, i)
-	}
-	sql := builder.String()
-	tk.MustExec(sql[:len(sql)-1])
+	batchInsert(tk, "test_add_index", start, num)
 
 	// Add some discrete rows.
 	maxBatch := 20
@@ -1010,8 +1004,7 @@ func testAddIndex(c *C, store kv.Storage, lease time.Duration, testPartition boo
 	}
 	// Encounter the value of math.MaxInt64 in middle of
 	v := math.MaxInt64 - defaultBatchSize/2
-	sql = fmt.Sprintf("insert into test_add_index values (%d, %d, %d)", v, v, v)
-	tk.MustExec(sql)
+	tk.MustExec(fmt.Sprintf("insert into test_add_index values (%d, %d, %d)", v, v, v))
 	otherKeys = append(otherKeys, v)
 
 	addIdxSQL := fmt.Sprintf("alter table test_add_index add %s key c3_index(c3)", idxTp)
