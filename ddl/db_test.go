@@ -300,16 +300,18 @@ func testAddIndexRollback(c *C, store kv.Storage, lease time.Duration, idxName, 
 	// add some rows
 	batchInsert(tk, "t1", 0, count)
 	// add some null rows
-	if hasNullValsInKey {
-		for i := count - 10; i < count; i++ {
-			tk.MustExec("insert into t1 values (?, ?, null)", i+10, i)
-		}
-	} else {
-		// add some duplicate rows
-		for i := count - 10; i < count; i++ {
-			tk.MustExec("insert into t1 values (?, ?, ?)", i+10, i, i)
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "insert into t1 values ")
+	for i := count - 10; i < count; i++ {
+		if hasNullValsInKey {
+			fmt.Fprintf(&builder, "(%d, %d, null),", i+10, i)
+		} else {
+			// add some duplicate rows
+			fmt.Fprintf(&builder, "(%d, %d, %d),", i+10, i, i)
 		}
 	}
+	sql := builder.String()
+	tk.MustExec(sql[:len(sql)-1])
 
 	done := make(chan error, 1)
 	go backgroundExec(store, addIdxSQL, done)
