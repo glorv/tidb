@@ -1890,7 +1890,7 @@ func (s *testDBSuite4) TestChangeColumn(c *C) {
 	s.tk.MustExec("drop table t3")
 }
 
-func (s *testDBSuite5) TestRenameColumn(c *C) {
+func (s *testDBSuite6) TestRenameColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 
@@ -3545,7 +3545,7 @@ func (s *testDBSuite5) TestAddIndexForGeneratedColumn(c *C) {
 	s.tk.MustExec("admin check table gcai_table")
 }
 
-func (s *testDBSuite5) TestModifyGeneratedColumn(c *C) {
+func (s *testDBSuite6) TestModifyGeneratedColumn(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("create database if not exists test;")
 	tk.MustExec("use test")
