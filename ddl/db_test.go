@@ -1556,7 +1556,7 @@ func (s *testDBSuite5) TestCreateIndexType(c *C) {
 	s.tk.MustExec(sql)
 }
 
-func (s *testDBSuite4) TestColumn(c *C) {
+func (s *testDBSuite1) TestColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.tk.MustExec("create table t2 (c1 int, c2 int, c3 int)")
@@ -4420,7 +4420,7 @@ func (s *testDBSuite2) TestDDLWithInvalidTableInfo(c *C) {
 	c.Assert(err.Error(), Equals, "[parser:1064]You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 94 near \"then (b / a) end));\" ")
 }
 
-func (s *testDBSuite1) TestAlterOrderBy(c *C) {
+func (s *testDBSuite6) TestAlterOrderBy(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.tk.MustExec("create table ob (pk int primary key, c int default 1, c1 int default 1, KEY cl(c1))")
