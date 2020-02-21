@@ -3725,7 +3725,7 @@ func (s *testDBSuite1) TestModifyColumnCharset(c *C) {
 
 }
 
-func (s *testDBSuite1) TestSetTableFlashReplica(c *C) {
+func (s *testDBSuite6) TestSetTableFlashReplica(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test_db")
 	s.mustExec(c, "drop table if exists t_flash;")
