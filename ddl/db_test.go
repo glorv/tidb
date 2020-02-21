@@ -300,18 +300,16 @@ func testAddIndexRollback(c *C, store kv.Storage, lease time.Duration, idxName, 
 	// add some rows
 	batchInsert(tk, "t1", 0, count)
 	// add some null rows
-	var builder strings.Builder
-	fmt.Fprintf(&builder, "insert into t1 values ")
-	for i := count - 10; i < count; i++ {
-		if hasNullValsInKey {
-			fmt.Fprintf(&builder, "(%d, %d, null),", i+10, i)
-		} else {
-			// add some duplicate rows
-			fmt.Fprintf(&builder, "(%d, %d, %d),", i+10, i, i)
+	if hasNullValsInKey {
+		for i := count - 10; i < count; i++ {
+			tk.MustExec("insert into t1 values (?, ?, null)", i+10, i)
+		}
+	} else {
+		// add some duplicate rows
+		for i := count - 10; i < count; i++ {
+			tk.MustExec("insert into t1 values (?, ?, ?)", i+10, i, i)
 		}
 	}
-	sql := builder.String()
-	tk.MustExec(sql[:len(sql)-1])
 
 	done := make(chan error, 1)
 	go backgroundExec(store, addIdxSQL, done)
@@ -672,7 +670,7 @@ func (s *testDBSuite5) TestCancelTruncateTable(c *C) {
 }
 
 // TestCancelRenameIndex tests cancel ddl job which type is rename index.
-func (s *testDBSuite6) TestCancelRenameIndex(c *C) {
+func (s *testDBSuite1) TestCancelRenameIndex(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.mustExec(c, "use test_db")
 	s.mustExec(c, "create database if not exists test_rename_index")
@@ -1128,7 +1126,7 @@ LOOP:
 }
 
 // TestCancelAddTableAndDropTablePartition tests cancel ddl job which type is add/drop table partition.
-func (s *testDBSuite6) TestCancelAddTableAndDropTablePartition(c *C) {
+func (s *testDBSuite1) TestCancelAddTableAndDropTablePartition(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.mustExec(c, "create database if not exists test_partition_table")
 	s.mustExec(c, "use test_partition_table")
@@ -1298,7 +1296,7 @@ LOOP:
 }
 
 // TestCancelDropColumn tests cancel ddl job which type is drop column.
-func (s *testDBSuite6) TestCancelDropColumn(c *C) {
+func (s *testDBSuite3) TestCancelDropColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.mustExec(c, "drop table if exists test_drop_column")
@@ -1556,7 +1554,7 @@ func (s *testDBSuite5) TestCreateIndexType(c *C) {
 	s.tk.MustExec(sql)
 }
 
-func (s *testDBSuite6) TestColumn(c *C) {
+func (s *testDBSuite1) TestColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.tk.MustExec("create table t2 (c1 int, c2 int, c3 int)")
@@ -1565,21 +1563,6 @@ func (s *testDBSuite6) TestColumn(c *C) {
 	s.testDropColumn(c)
 	s.tk.MustExec("drop table t2")
 }
-
-//func (s *testDBSuite1) TestAddColumnTooMany(c *C) {
-//	s.tk = testkit.NewTestKit(c, s.store)
-//	s.tk.MustExec("use test")
-//	count := int(atomic.LoadUint32(&ddl.TableColumnCountLimit) - 1)
-//	var cols []string
-//	for i := 0; i < count; i++ {
-//		cols = append(cols, fmt.Sprintf("a%d int", i))
-//	}
-//	createSQL := fmt.Sprintf("create table t_column_too_many (%s)", strings.Join(cols, ","))
-//	s.tk.MustExec(createSQL)
-//	s.tk.MustExec("alter table t_column_too_many add column a_512 int")
-//	alterSQL := "alter table t_column_too_many add column a_513 int"
-//	s.tk.MustGetErrCode(alterSQL, mysql.ErrTooManyFields)
-//}
 
 func sessionExec(c *C, s kv.Storage, sql string) {
 	se, err := session.CreateSession4Test(s)
@@ -1780,7 +1763,7 @@ LOOP:
 // TestDropColumn is for inserting value with a to-be-dropped column when do drop column.
 // Column info from schema in build-insert-plan should be public only,
 // otherwise they will not be consist with Table.Col(), then the server will panic.
-func (s *testDBSuite6) TestDropColumn(c *C) {
+func (s *testDBSuite2) TestDropColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("create database drop_col_db")
 	s.tk.MustExec("use drop_col_db")
@@ -1890,7 +1873,7 @@ func (s *testDBSuite4) TestChangeColumn(c *C) {
 	s.tk.MustExec("drop table t3")
 }
 
-func (s *testDBSuite6) TestRenameColumn(c *C) {
+func (s *testDBSuite5) TestRenameColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 
@@ -2967,7 +2950,7 @@ func (s *testDBSuite5) TestCheckColumnDefaultValue(c *C) {
 	c.Assert(tblInfo.Meta().Columns[0].DefaultValue, Equals, `null`)
 }
 
-func (s *testDBSuite6) TestCharacterSetInColumns(c *C) {
+func (s *testDBSuite1) TestCharacterSetInColumns(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("create database varchar_test;")
 	defer s.tk.MustExec("drop database varchar_test;")
@@ -3177,7 +3160,7 @@ LOOP:
 	s.mustExec(c, "drop table t1")
 }
 //
-func (s *testDBSuite6) TestModifyColumnNullToNotNull(c *C) {
+func (s *testDBSuite1) TestModifyColumnNullToNotNull(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	tk2 := testkit.NewTestKit(c, s.store)
 	tk2.MustExec("use test_db")
@@ -3545,7 +3528,7 @@ func (s *testDBSuite5) TestAddIndexForGeneratedColumn(c *C) {
 	s.tk.MustExec("admin check table gcai_table")
 }
 
-func (s *testDBSuite6) TestModifyGeneratedColumn(c *C) {
+func (s *testDBSuite5) TestModifyGeneratedColumn(c *C) {
 	tk := testkit.NewTestKit(c, s.store)
 	tk.MustExec("create database if not exists test;")
 	tk.MustExec("use test")
@@ -3725,7 +3708,7 @@ func (s *testDBSuite1) TestModifyColumnCharset(c *C) {
 
 }
 
-func (s *testDBSuite6) TestSetTableFlashReplica(c *C) {
+func (s *testDBSuite1) TestSetTableFlashReplica(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use test_db")
 	s.mustExec(c, "drop table if exists t_flash;")
@@ -4420,7 +4403,7 @@ func (s *testDBSuite2) TestDDLWithInvalidTableInfo(c *C) {
 	c.Assert(err.Error(), Equals, "[parser:1064]You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 94 near \"then (b / a) end));\" ")
 }
 
-func (s *testDBSuite6) TestAlterOrderBy(c *C) {
+func (s *testDBSuite1) TestAlterOrderBy(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.tk.MustExec("create table ob (pk int primary key, c int default 1, c1 int default 1, KEY cl(c1))")
