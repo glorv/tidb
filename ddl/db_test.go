@@ -672,7 +672,7 @@ func (s *testDBSuite5) TestCancelTruncateTable(c *C) {
 }
 
 // TestCancelRenameIndex tests cancel ddl job which type is rename index.
-func (s *testDBSuite1) TestCancelRenameIndex(c *C) {
+func (s *testDBSuite6) TestCancelRenameIndex(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.mustExec(c, "use test_db")
 	s.mustExec(c, "create database if not exists test_rename_index")
