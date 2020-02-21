@@ -1317,8 +1317,16 @@ func (b *executorBuilder) buildMemTable(v *plannercore.PhysicalMemTable) Executo
 		case strings.ToLower(infoschema.TableInspectionResult):
 			return &MemTableReaderExec{
 				baseExecutor: newBaseExecutor(b.ctx, v.Schema(), v.ExplainID()),
-				retriever: &inspectionRetriever{
+				retriever: &inspectionResultRetriever{
 					extractor: v.Extractor.(*plannercore.InspectionResultTableExtractor),
+				},
+			}
+		case strings.ToLower(infoschema.TableInspectionSummary):
+			return &MemTableReaderExec{
+				baseExecutor: newBaseExecutor(b.ctx, v.Schema(), v.ExplainID()),
+				retriever: &inspectionSummaryRetriever{
+					table:     v.Table,
+					extractor: v.Extractor.(*plannercore.InspectionSummaryTableExtractor),
 				},
 			}
 		case strings.ToLower(infoschema.TableMetricSummary):
@@ -1344,6 +1352,18 @@ func (b *executorBuilder) buildMemTable(v *plannercore.PhysicalMemTable) Executo
 					table:   v.Table,
 					columns: v.Columns,
 				},
+			}
+		case strings.ToLower(infoschema.TableSlowQuery), strings.ToLower(infoschema.ClusterTableSlowLog):
+			retriever := &slowQueryRetriever{
+				table:      v.Table,
+				outputCols: v.Columns,
+			}
+			if v.Extractor != nil {
+				retriever.extractor = v.Extractor.(*plannercore.SlowQueryExtractor)
+			}
+			return &MemTableReaderExec{
+				baseExecutor: newBaseExecutor(b.ctx, v.Schema(), v.ExplainID()),
+				retriever:    retriever,
 			}
 		}
 	}
