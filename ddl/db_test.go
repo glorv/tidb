@@ -1298,7 +1298,7 @@ LOOP:
 }
 
 // TestCancelDropColumn tests cancel ddl job which type is drop column.
-func (s *testDBSuite3) TestCancelDropColumn(c *C) {
+func (s *testDBSuite6) TestCancelDropColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.mustExec(c, "drop table if exists test_drop_column")
@@ -1556,7 +1556,7 @@ func (s *testDBSuite5) TestCreateIndexType(c *C) {
 	s.tk.MustExec(sql)
 }
 
-func (s *testDBSuite1) TestColumn(c *C) {
+func (s *testDBSuite6) TestColumn(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("use " + s.schemaName)
 	s.tk.MustExec("create table t2 (c1 int, c2 int, c3 int)")
@@ -2967,7 +2967,7 @@ func (s *testDBSuite5) TestCheckColumnDefaultValue(c *C) {
 	c.Assert(tblInfo.Meta().Columns[0].DefaultValue, Equals, `null`)
 }
 
-func (s *testDBSuite1) TestCharacterSetInColumns(c *C) {
+func (s *testDBSuite6) TestCharacterSetInColumns(c *C) {
 	s.tk = testkit.NewTestKit(c, s.store)
 	s.tk.MustExec("create database varchar_test;")
 	defer s.tk.MustExec("drop database varchar_test;")
