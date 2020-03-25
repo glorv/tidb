@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -1469,13 +1470,14 @@ func testPartitionAddIndex(tk *testkit.TestKit, c *C, key string) {
 		}
 		return dml
 	}
+	rowCount := 200
 	var dml string
 	if key == "primary key" {
 		idxName1 = "primary"
 		// For the primary key, hired must be unique.
-		dml = f(500, true)
+		dml = f(rowCount, true)
 	} else {
-		dml = f(500, false)
+		dml = f(rowCount, false)
 	}
 	tk.MustExec(dml)
 
@@ -1494,8 +1496,8 @@ func testPartitionAddIndex(tk *testkit.TestKit, c *C, key string) {
 	}
 	c.Assert(idx1, NotNil)
 
-	tk.MustQuery(fmt.Sprintf("select count(hired) from partition_add_idx use index(%s)", idxName1)).Check(testkit.Rows("500"))
-	tk.MustQuery("select count(id) from partition_add_idx use index(idx2)").Check(testkit.Rows("500"))
+	tk.MustQuery(fmt.Sprintf("select count(hired) from partition_add_idx use index(%s)", idxName1)).Check(testkit.Rows(strconv.Itoa(rowCount)))
+	tk.MustQuery("select count(id) from partition_add_idx use index(idx2)").Check(testkit.Rows(strconv.Itoa(rowCount)))
 
 	tk.MustExec("admin check table partition_add_idx")
 	tk.MustExec("drop table partition_add_idx")

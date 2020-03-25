@@ -992,7 +992,7 @@ func testAddIndex(c *C, store kv.Storage, lease time.Duration, testPartition boo
 
 	// Add some discrete rows.
 	maxBatch := 20
-	batchCnt := 100
+	batchCnt := 50
 	otherKeys := make([]int, 0, batchCnt*maxBatch)
 	// Make sure there are no duplicate keys.
 	base := defaultBatchSize * 20
@@ -1029,7 +1029,7 @@ LOOP:
 			// When the server performance is particularly poor,
 			// the adding index operation can not be completed.
 			// So here is a limit to the number of rows inserted.
-			if num > defaultBatchSize*10 {
+			if num > defaultBatchSize*5 {
 				break
 			}
 			step := 5
