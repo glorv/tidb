@@ -182,7 +182,7 @@ func (c *RawKVClient) Put(key, value []byte) error {
 }
 
 // BatchPut stores key-value pairs to TiKV.
-func (c *RawKVClient) BatchPut(keys, values [][]byte) error {
+func (c *RawKVClient) BatchPutCf(keys, values [][]byte, cf string) error {
 	start := time.Now()
 	defer func() {
 		tikvRawkvCmdHistogramWithBatchPut.Observe(time.Since(start).Seconds())
@@ -199,6 +199,11 @@ func (c *RawKVClient) BatchPut(keys, values [][]byte) error {
 	bo := NewBackoffer(context.Background(), rawkvMaxBackoff)
 	err := c.sendBatchPut(bo, keys, values)
 	return errors.Trace(err)
+}
+
+// BatchPut stores key-value pairs to TiKV.
+func (c *RawKVClient) BatchPut(keys, values [][]byte) error {
+	return c.BatchPutCf(keys, values, "")
 }
 
 // Delete deletes a key-value pair from TiKV.
@@ -540,6 +545,10 @@ func (c *RawKVClient) sendDeleteRangeReq(startKey []byte, endKey []byte) (*tikvr
 }
 
 func (c *RawKVClient) sendBatchPut(bo *Backoffer, keys, values [][]byte) error {
+	return c.sendBatchPutCf(bo, keys, values, "")
+}
+
+func (c *RawKVClient) sendBatchPutCf(bo *Backoffer, keys, values [][]byte, cf string) error {
 	keyToValue := make(map[string][]byte, len(keys))
 	for i, key := range keys {
 		keyToValue[string(key)] = values[i]
@@ -560,7 +569,7 @@ func (c *RawKVClient) sendBatchPut(bo *Backoffer, keys, values [][]byte) error {
 		go func() {
 			singleBatchBackoffer, singleBatchCancel := bo.Fork()
 			defer singleBatchCancel()
-			ch <- c.doBatchPut(singleBatchBackoffer, batch1)
+			ch <- c.doBatchPut(singleBatchBackoffer, batch1, cf)
 		}()
 	}
 
@@ -616,13 +625,13 @@ func appendBatches(batches []batch, regionID RegionVerID, groupKeys [][]byte, ke
 	return batches
 }
 
-func (c *RawKVClient) doBatchPut(bo *Backoffer, batch batch) error {
+func (c *RawKVClient) doBatchPut(bo *Backoffer, batch batch, cf string) error {
 	kvPair := make([]*kvrpcpb.KvPair, 0, len(batch.keys))
 	for i, key := range batch.keys {
 		kvPair = append(kvPair, &kvrpcpb.KvPair{Key: key, Value: batch.values[i]})
 	}
 
-	req := tikvrpc.NewRequest(tikvrpc.CmdRawBatchPut, &kvrpcpb.RawBatchPutRequest{Pairs: kvPair})
+	req := tikvrpc.NewRequest(tikvrpc.CmdRawBatchPut, &kvrpcpb.RawBatchPutRequest{Pairs: kvPair, Cf: cf})
 
 	sender := NewRegionRequestSender(c.regionCache, c.rpcClient)
 	resp, err := sender.SendReq(bo, req, batch.regionID, readTimeoutShort)
