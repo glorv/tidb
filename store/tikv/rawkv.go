@@ -197,7 +197,7 @@ func (c *RawKVClient) BatchPutCf(keys, values [][]byte, cf string) error {
 		}
 	}
 	bo := NewBackoffer(context.Background(), rawkvMaxBackoff)
-	err := c.sendBatchPut(bo, keys, values)
+	err := c.sendBatchPutCf(bo, keys, values, cf)
 	return errors.Trace(err)
 }
 
