@@ -370,7 +370,7 @@ func (t *TableCommon) UpdateRecord(ctx sessionctx.Context, h kv.Handle, oldData,
 		} else {
 			value = newData[col.Offset]
 		}
-		if !t.canSkip(col, value) {
+		if !t.canSkip(col, &value) {
 			colIDs = append(colIDs, col.ID)
 			row = append(row, value)
 		}
@@ -574,7 +574,7 @@ func (t *TableCommon) AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, 
 		} else {
 			value = r[col.Offset]
 		}
-		if !t.canSkip(col, value) {
+		if !t.canSkip(col, &value) {
 			colIDs = append(colIDs, col.ID)
 			row = append(row, value)
 		}
@@ -711,7 +711,7 @@ func (t *TableCommon) AddRecord(ctx sessionctx.Context, r []types.Datum, opts ..
 		} else {
 			value = r[col.Offset]
 		}
-		if !t.canSkip(col, value) {
+		if !t.canSkip(col, &value) {
 			colIDs = append(colIDs, col.ID)
 			row = append(row, value)
 		}
@@ -1308,7 +1308,7 @@ func (t *TableCommon) getMutation(ctx sessionctx.Context) *binlog.TableMutation 
 	return ctx.StmtGetMutation(t.tableID)
 }
 
-func (t *TableCommon) canSkip(col *table.Column, value types.Datum) bool {
+func (t *TableCommon) canSkip(col *table.Column, value *types.Datum) bool {
 	return CanSkip(t.Meta(), col, value)
 }
 
@@ -1316,7 +1316,7 @@ func (t *TableCommon) canSkip(col *table.Column, value types.Datum) bool {
 // 1. the column is included in primary key;
 // 2. the column's default value is null, and the value equals to that;
 // 3. the column is virtual generated.
-func CanSkip(info *model.TableInfo, col *table.Column, value types.Datum) bool {
+func CanSkip(info *model.TableInfo, col *table.Column, value *types.Datum) bool {
 	if col.IsPKHandleColumn(info) {
 		return true
 	}
