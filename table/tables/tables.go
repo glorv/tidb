@@ -52,6 +52,13 @@ type CommonCtx struct {
 	row []types.Datum
 }
 
+func NewCommonCtx(size int) *CommonCtx {
+	return &CommonCtx{
+		colIDs: make([]int64, 0, size),
+		row:    make([]types.Datum, 0, size),
+	}
+}
+
 // TableCommon is shared by both Table and partition.
 type TableCommon struct {
 	tableID int64
