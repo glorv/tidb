@@ -196,6 +196,8 @@ type Table interface {
 	// AddRecord inserts a row which should contain only public columns
 	AddRecord(ctx sessionctx.Context, r []types.Datum, opts ...AddRecordOption) (recordID kv.Handle, err error)
 
+	AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, addCtx interface{}, opts ...AddRecordOption) (recordID kv.Handle, err error)
+
 	// UpdateRecord updates a row which should contain only writable columns.
 	UpdateRecord(ctx sessionctx.Context, h kv.Handle, currData, newData []types.Datum, touched []bool) error
 

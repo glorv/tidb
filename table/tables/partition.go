@@ -387,6 +387,26 @@ func (t *partitionedTable) AddRecord(ctx sessionctx.Context, r []types.Datum, op
 	return partitionedTableAddRecord(ctx, t, r, nil, opts)
 }
 
+func (t *partitionedTable) AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, addCtx interface{}, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
+	return partitionedTableAddRecordWithCtx(ctx, t, r, addCtx, nil, opts)
+}
+
+func partitionedTableAddRecordWithCtx(ctx sessionctx.Context, t *partitionedTable, r []types.Datum, addCtx interface{}, partitionSelection map[int64]struct{}, opts []table.AddRecordOption) (recordID kv.Handle, err error) {
+	partitionInfo := t.meta.GetPartitionInfo()
+	pid, err := t.locatePartition(ctx, partitionInfo, r)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	if partitionSelection != nil {
+		if _, ok := partitionSelection[pid]; !ok {
+			return nil, errors.WithStack(table.ErrRowDoesNotMatchGivenPartitionSet)
+		}
+	}
+	tbl := t.GetPartition(pid)
+	return tbl.AddRecordWithCtx(ctx, r, addCtx, opts...)
+}
+
 func partitionedTableAddRecord(ctx sessionctx.Context, t *partitionedTable, r []types.Datum, partitionSelection map[int64]struct{}, opts []table.AddRecordOption) (recordID kv.Handle, err error) {
 	partitionInfo := t.meta.GetPartitionInfo()
 	pid, err := t.locatePartition(ctx, partitionInfo, r)
@@ -425,6 +445,10 @@ func NewPartitionTableithGivenSets(tbl table.PartitionedTable, partitions map[in
 // AddRecord implements the AddRecord method for the table.Table interface.
 func (t *partitionTableWithGivenSets) AddRecord(ctx sessionctx.Context, r []types.Datum, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
 	return partitionedTableAddRecord(ctx, t.partitionedTable, r, t.partitions, opts)
+}
+
+func (t *partitionTableWithGivenSets) AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, addCtx interface{}, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
+	return partitionedTableAddRecordWithCtx(ctx, t.partitionedTable, r, addCtx, t.partitions, opts)
 }
 
 // RemoveRecord implements table.Table RemoveRecord interface.

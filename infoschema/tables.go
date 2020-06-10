@@ -1572,6 +1572,10 @@ func (it *infoschemaTable) AddRecord(ctx sessionctx.Context, r []types.Datum, op
 	return nil, table.ErrUnsupportedOp
 }
 
+func (it *infoschemaTable) AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, addCtx interface{}, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
+	return nil, table.ErrUnsupportedOp
+}
+
 // RemoveRecord implements table.Table RemoveRecord interface.
 func (it *infoschemaTable) RemoveRecord(ctx sessionctx.Context, h kv.Handle, r []types.Datum) error {
 	return table.ErrUnsupportedOp
@@ -1696,6 +1700,10 @@ func (vt *VirtualTable) RecordKey(h kv.Handle) kv.Key {
 
 // AddRecord implements table.Table AddRecord interface.
 func (vt *VirtualTable) AddRecord(ctx sessionctx.Context, r []types.Datum, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
+	return nil, table.ErrUnsupportedOp
+}
+
+func (vt *VirtualTable) AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, addCtx interface{}, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
 	return nil, table.ErrUnsupportedOp
 }
 

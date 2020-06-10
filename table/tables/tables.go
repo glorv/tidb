@@ -47,6 +47,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type CommonCtx struct {
+	colIDs []int64
+	row []types.Datum
+}
+
 // TableCommon is shared by both Table and partition.
 type TableCommon struct {
 	tableID int64
@@ -466,6 +471,148 @@ func adjustRowValuesBuf(writeBufs *variable.WriteStmtBufs, rowLen int) {
 		writeBufs.AddRowValues = make([]types.Datum, adjustLen)
 	}
 	writeBufs.AddRowValues = writeBufs.AddRowValues[:adjustLen]
+}
+
+
+func (t *TableCommon) AddRecordWithCtx(ctx sessionctx.Context, r []types.Datum, addCtx interface{}, opts ...table.AddRecordOption) (recordID kv.Handle, err error) {
+	commonCtx, ok := addCtx.(*CommonCtx)
+	if !ok {
+		commonCtx = &CommonCtx{}
+	}
+	colIDs := commonCtx.colIDs[:0]
+	row := commonCtx.row[:0]
+
+	var opt table.AddRecordOpt
+	for _, fn := range opts {
+		fn.ApplyOn(&opt)
+	}
+	var hasRecordID bool
+	cols := t.Cols()
+	// opt.IsUpdate is a flag for update.
+	// If handle ID is changed when update, update will remove the old record first, and then call `AddRecord` to add a new record.
+	// Currently, only insert can set _tidb_rowid, update can not update _tidb_rowid.
+	if len(r) > len(cols) && !opt.IsUpdate {
+		// The last value is _tidb_rowid.
+		recordID = kv.IntHandle(r[len(r)-1].GetInt64())
+		hasRecordID = true
+	} else {
+		tblInfo := t.Meta()
+		if tblInfo.PKIsHandle {
+			recordID = kv.IntHandle(r[tblInfo.GetPkColInfo().Offset].GetInt64())
+			hasRecordID = true
+		}
+	}
+	if !hasRecordID {
+		if opt.ReserveAutoID > 0 {
+			// Reserve a batch of auto ID in the statement context.
+			// The reserved ID could be used in the future within this statement, by the
+			// following AddRecord() operation.
+			// Make the IDs continuous benefit for the performance of TiKV.
+			stmtCtx := ctx.GetSessionVars().StmtCtx
+			stmtCtx.BaseRowID, stmtCtx.MaxRowID, err = allocHandleIDs(ctx, t, uint64(opt.ReserveAutoID))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		recordID, err = AllocHandle(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	txn, err := ctx.Txn(true)
+	if err != nil {
+		return nil, err
+	}
+	execBuf := kv.NewStagingBufferStore(txn)
+	defer execBuf.Discard()
+	sessVars := ctx.GetSessionVars()
+
+	var createIdxOpts []table.CreateIdxOptFunc
+	if len(opts) > 0 {
+		createIdxOpts = make([]table.CreateIdxOptFunc, 0, len(opts))
+		for _, fn := range opts {
+			if raw, ok := fn.(table.CreateIdxOptFunc); ok {
+				createIdxOpts = append(createIdxOpts, raw)
+			}
+		}
+	}
+	// Insert new entries into indices.
+	h, err := t.addIndices(ctx, recordID, r, execBuf, createIdxOpts)
+	if err != nil {
+		return h, err
+	}
+
+	var binlogColIDs []int64
+	var binlogRow []types.Datum
+
+	for _, col := range t.WritableCols() {
+		var value types.Datum
+		// Update call `AddRecord` will already handle the write only column default value.
+		// Only insert should add default value for write only column.
+		if col.State != model.StatePublic && !opt.IsUpdate {
+			// If col is in write only or write reorganization state, we must add it with its default value.
+			value, err = table.GetColOriginDefaultValue(ctx, col.ToInfo())
+			if err != nil {
+				return nil, err
+			}
+			// add value to `r` for dirty db in transaction.
+			// Otherwise when update will panic cause by get value of column in write only state from dirty db.
+			if col.Offset < len(r) {
+				r[col.Offset] = value
+			} else {
+				r = append(r, value)
+			}
+		} else {
+			value = r[col.Offset]
+		}
+		if !t.canSkip(col, value) {
+			colIDs = append(colIDs, col.ID)
+			row = append(row, value)
+		}
+	}
+	writeBufs := sessVars.GetWriteStmtBufs()
+	adjustRowValuesBuf(writeBufs, len(row))
+	key := t.RecordKey(recordID)
+	sc, rd := sessVars.StmtCtx, &sessVars.RowEncoder
+	writeBufs.RowValBuf, err = tablecodec.EncodeRow(sc, row, colIDs, writeBufs.RowValBuf, writeBufs.AddRowValues, rd)
+	if err != nil {
+		return nil, err
+	}
+	value := writeBufs.RowValBuf
+	if err = execBuf.Set(key, value); err != nil {
+		return nil, err
+	}
+
+	if _, err := execBuf.Flush(); err != nil {
+		return nil, err
+	}
+	ctx.StmtAddDirtyTableOP(table.DirtyTableAddRow, t.physicalTableID, recordID)
+
+	if shouldWriteBinlog(ctx) {
+		// For insert, TiDB and Binlog can use same row and schema.
+		binlogRow = row
+		binlogColIDs = colIDs
+		err = t.addInsertBinlog(ctx, recordID, binlogRow, binlogColIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	sc.AddAffectedRows(1)
+	if sessVars.TxnCtx == nil {
+		return recordID, nil
+	}
+	colSize := make(map[int64]int64, len(r))
+	for id, col := range t.Cols() {
+		size, err := codec.EstimateValueSize(sc, r[id])
+		if err != nil {
+			continue
+		}
+		colSize[col.ID] = int64(size) - 1
+	}
+	sessVars.TxnCtx.UpdateDeltaForTable(t.physicalTableID, 1, 1, colSize)
+	return recordID, nil
 }
 
 // AddRecord implements table.Table AddRecord interface.
