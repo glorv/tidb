@@ -11289,7 +11289,12 @@ yynewstate:
 		}
 	case 10:
 		{
-			parser.yyVAL.item = &ast.PlacementOption{Tp: ast.PlacementOptionFollowerCount, UintValue: yyS[yypt-0].item.(uint64)}
+			cnt := yyS[yypt-0].item.(uint64)
+			if cnt == 0 {
+				yylex.AppendError(yylex.Errorf("FOLLOWERS must be positive"))
+				return 1
+			}
+			parser.yyVAL.item = &ast.PlacementOption{Tp: ast.PlacementOptionFollowerCount, UintValue: cnt}
 		}
 	case 11:
 		{
