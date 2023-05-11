@@ -3316,6 +3316,7 @@ func (e *memtableRetriever) setDataFromResourceGroups() error {
 		if !isDefaultInReservedSetting {
 			fillrate = strconv.FormatUint(group.RUSettings.RU.Settings.FillRate, 10)
 		}
+		isBackground := fmt.Sprintf("%v", group.IsBackground)
 		switch group.Mode {
 		case rmpb.GroupMode_RUMode:
 			if group.RUSettings.RU.Settings.BurstLimit < 0 {
@@ -3326,12 +3327,14 @@ func (e *memtableRetriever) setDataFromResourceGroups() error {
 				fillrate,
 				priority,
 				burstable,
+				isBackground,
 			)
 			rows = append(rows, row)
 		default:
 			//mode = "UNKNOWN_MODE"
 			row := types.MakeDatums(
 				group.Name,
+				nil,
 				nil,
 				nil,
 				nil,

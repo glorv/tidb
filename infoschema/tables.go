@@ -1597,6 +1597,7 @@ var tableResourceGroupsCols = []columnInfo{
 	{name: "RU_PER_SEC", tp: mysql.TypeVarchar, size: 21},
 	{name: "PRIORITY", tp: mysql.TypeVarchar, size: 6},
 	{name: "BURSTABLE", tp: mysql.TypeVarchar, size: 3},
+	{name: "BACKGROUND", tp: mysql.TypeVarchar, size: 5},
 }
 
 // GetShardingInfo returns a nil or description string for the sharding information of given TableInfo.

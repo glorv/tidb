@@ -676,6 +676,7 @@ import (
 	addDate               "ADDDATE"
 	approxCountDistinct   "APPROX_COUNT_DISTINCT"
 	approxPercentile      "APPROX_PERCENTILE"
+	background 			  "BACKGROUND"
 	bitAnd                "BIT_AND"
 	bitOr                 "BIT_OR"
 	bitXor                "BIT_XOR"
@@ -1736,6 +1737,10 @@ DirectResourceGroupOption:
 |	"BURSTABLE"
 	{
 		$$ = &ast.ResourceGroupOption{Tp: ast.ResourceBurstableOpiton, BoolValue: true}
+	}
+|   "BACKGROUND"
+	{
+		$$ = &ast.ResourceGroupOption{Tp: ast.ResourceBackgroundOption, BoolValue: true}
 	}
 
 PlacementOptionList:
@@ -6810,6 +6815,7 @@ NotKeywordToken:
 |	"UNTIL_TS"
 |	"RESTORED_TS"
 |	"FULL_BACKUP_STORAGE"
+|   "BACKGROUND"
 
 /************************************************************************************
  *

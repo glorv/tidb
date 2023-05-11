@@ -181,6 +181,7 @@ var tokenMap = map[string]int{
 	"AVG_ROW_LENGTH":           avgRowLength,
 	"AVG":                      avg,
 	"BACKEND":                  backend,
+	"BACKGROUND":               background,
 	"BACKUP":                   backup,
 	"BACKUPS":                  backups,
 	"BEGIN":                    begin,

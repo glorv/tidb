@@ -1849,6 +1849,7 @@ type ResourceGroupSettings struct {
 	IOReadBandwidth  string `json:"io_read_bandwidth"`
 	IOWriteBandwidth string `json:"io_write_bandwidth"`
 	BurstLimit       int64  `json:"burst_limit"`
+	IsBackground     bool   `json:"is_background"`
 }
 
 // NewResourceGroupSettings creates a new ResourceGroupSettings.
@@ -1860,6 +1861,7 @@ func NewResourceGroupSettings() *ResourceGroupSettings {
 		IOReadBandwidth:  "",
 		IOWriteBandwidth: "",
 		BurstLimit:       0,
+		IsBackground:     false,
 	}
 }
 
@@ -1902,6 +1904,9 @@ func (p *ResourceGroupSettings) String() string {
 	// Once burst limit is negative, meaning allow burst with unlimit.
 	if p.BurstLimit < 0 {
 		writeSettingItemToBuilder(sb, "BURSTABLE")
+	}
+	if p.IsBackground {
+		writeSettingItemToBuilder(sb, "BACKGROUND")
 	}
 	return sb.String()
 }

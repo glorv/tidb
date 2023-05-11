@@ -2124,6 +2124,7 @@ const (
 
 	// Options
 	ResourceBurstableOpiton
+	ResourceBackgroundOption
 )
 
 func (n *ResourceGroupOption) Restore(ctx *format.RestoreCtx) error {
@@ -2151,6 +2152,8 @@ func (n *ResourceGroupOption) Restore(ctx *format.RestoreCtx) error {
 			ctx.WriteString(n.StrValue)
 		case ResourceBurstableOpiton:
 			ctx.WriteKeyWord("BURSTABLE")
+		case ResourceBackgroundOption:
+			ctx.WriteKeyWord("BACKGROUND")
 		default:
 			return errors.Errorf("invalid PlacementOption: %d", n.Tp)
 		}

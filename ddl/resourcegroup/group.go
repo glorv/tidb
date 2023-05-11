@@ -32,7 +32,8 @@ func NewGroupFromOptions(groupName string, options *model.ResourceGroupSettings)
 	}
 
 	group := &rmpb.ResourceGroup{
-		Name: groupName,
+		Name:         groupName,
+		IsBackground: options.IsBackground,
 	}
 	if options.RURate > 0 {
 		group.Mode = rmpb.GroupMode_RUMode

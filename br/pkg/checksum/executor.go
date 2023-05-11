@@ -213,6 +213,7 @@ func buildTableRequest(
 		SetStartTS(startTS).
 		SetChecksumRequest(checksum).
 		SetConcurrency(int(concurrency)).
+		SetResourceGroupName("br").
 		Build()
 }
 
@@ -250,6 +251,7 @@ func buildIndexRequest(
 		SetStartTS(startTS).
 		SetChecksumRequest(checksum).
 		SetConcurrency(int(concurrency)).
+		SetResourceGroupName("br").
 		Build()
 }
 

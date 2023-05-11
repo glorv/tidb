@@ -3080,6 +3080,8 @@ func SetDirectResourceGroupUnit(resourceGroupSettings *model.ResourceGroupSettin
 			limit = -1
 		}
 		resourceGroupSettings.BurstLimit = limit
+	case ast.ResourceBackgroundOption:
+		resourceGroupSettings.IsBackground = true
 	default:
 		return errors.Trace(errors.New("unknown resource unit type"))
 	}
