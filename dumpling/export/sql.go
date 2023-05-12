@@ -392,10 +392,10 @@ func SelectVersion(db *sql.DB) (string, error) {
 }
 
 // SelectAllFromTable dumps data serialized from a specified table
-func SelectAllFromTable(conf *Config, meta TableMeta, partition, orderByClause string) TableDataIR {
+func SelectAllFromTable(conf *Config, meta TableMeta, partition, orderByClause string, noCache bool) TableDataIR {
 	database, table := meta.DatabaseName(), meta.TableName()
 	selectedField, selectLen := meta.SelectedField(), meta.SelectedLen()
-	query := buildSelectQuery(database, table, selectedField, partition, buildWhereCondition(conf, ""), orderByClause)
+	query := buildSelectQuery(database, table, selectedField, partition, buildWhereCondition(conf, ""), orderByClause, noCache)
 
 	return &tableData{
 		query:  query,
@@ -403,9 +403,12 @@ func SelectAllFromTable(conf *Config, meta TableMeta, partition, orderByClause s
 	}
 }
 
-func buildSelectQuery(database, table, fields, partition, where, orderByClause string) string {
+func buildSelectQuery(database, table, fields, partition, where, orderByClause string, noCache bool) string {
 	var query strings.Builder
-	query.WriteString("SELECT ")
+	query.WriteString("SELECT")
+	if noCache {
+		query.WriteString(" SQL_NO_CACHE")
+	}
 	if fields == "" {
 		// If all of the columns are generated,
 		// we need to make sure the query is valid.

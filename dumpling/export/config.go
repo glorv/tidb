@@ -74,6 +74,7 @@ const (
 	flagReadTimeout              = "read-timeout"
 	flagTransactionalConsistency = "transactional-consistency"
 	flagCompress                 = "compress"
+	flagNoCache                  = "no-cache"
 
 	// FlagHelp represents the help flag
 	FlagHelp = "help"
@@ -96,6 +97,7 @@ type Config struct {
 	EscapeBackslash          bool
 	DumpEmptyDatabase        bool
 	PosAfterConnect          bool
+	NoCache                  bool
 	CompressType             storage.CompressType
 
 	Host     string
@@ -305,6 +307,7 @@ func (*Config) DefineFlags(flags *pflag.FlagSet) {
 	flags.Bool(flagTransactionalConsistency, true, "Only support transactional consistency")
 	_ = flags.MarkHidden(flagTransactionalConsistency)
 	flags.StringP(flagCompress, "c", "", "Compress output file type, support 'gzip', 'snappy', 'zstd', 'no-compression' now")
+	flags.Bool(flagNoCache, false, "select data without refresh sql cache")
 }
 
 // ParseFromFlags parses dumpling's export.Config from flags
@@ -539,6 +542,10 @@ func (conf *Config) ParseFromFlags(flags *pflag.FlagSet) error {
 	}
 
 	err = conf.BackendOptions.ParseFromFlags(pflag.CommandLine)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	conf.NoCache, err = flags.GetBool(flagNoCache)
 	if err != nil {
 		return errors.Trace(err)
 	}
