@@ -35,6 +35,7 @@ import (
 	"github.com/pingcap/tidb/br/pkg/lightning/metric"
 	"github.com/pingcap/tidb/br/pkg/logutil"
 	"github.com/pingcap/tidb/br/pkg/restore/split"
+	"github.com/pingcap/tidb/tablecodec"
 	"github.com/pingcap/tidb/util/codec"
 	"github.com/pingcap/tidb/util/mathutil"
 	"go.uber.org/zap"
@@ -198,6 +199,14 @@ func (local *Backend) writeToTiKV(ctx context.Context, j *regionJob) error {
 		return nil
 	}
 
+	toNewId := j.engine.toNewTblId
+	if toNewId != nil {
+		firstKey = toNewId(firstKey)
+		lastKey = toNewId(lastKey)
+	} else {
+		toNewId = func(key []byte) []byte { return key }
+	}
+
 	firstKey = codec.EncodeBytes([]byte{}, firstKey)
 	lastKey = codec.EncodeBytes([]byte{}, lastKey)
 
@@ -291,11 +300,11 @@ func (local *Backend) writeToTiKV(ctx context.Context, j *regionJob) error {
 		kvSize := int64(len(iter.Key()) + len(iter.Value()))
 		// here we reuse the `*sst.Pair`s to optimize object allocation
 		if count < len(pairs) {
-			pairs[count].Key = bytesBuf.AddBytes(iter.Key())
+			pairs[count].Key = toNewId(bytesBuf.AddBytes(iter.Key()))
 			pairs[count].Value = bytesBuf.AddBytes(iter.Value())
 		} else {
 			pair := &sst.Pair{
-				Key:   bytesBuf.AddBytes(iter.Key()),
+				Key:   toNewId(bytesBuf.AddBytes(iter.Key())),
 				Value: bytesBuf.AddBytes(iter.Value()),
 			}
 			pairs = append(pairs, pair)
@@ -306,6 +315,11 @@ func (local *Backend) writeToTiKV(ctx context.Context, j *regionJob) error {
 		totalSize += kvSize
 
 		if count >= kvBatchSize || size >= flushLimit {
+			firstID := tablecodec.DecodeTableID(pairs[0].Key)
+			lastID := tablecodec.DecodeTableID(pairs[count-1].Key)
+			if firstID != j.engine.tableInfo.ID || lastID != j.engine.tableInfo.ID {
+				log.L().Panic("check table id failed", zap.Int64("expected", j.engine.tableInfo.ID), zap.Int64("first", firstID), zap.Int64("last", lastID))
+			}
 			if err := flushKVs(); err != nil {
 				return errors.Trace(err)
 			}

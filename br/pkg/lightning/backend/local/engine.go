@@ -122,8 +122,10 @@ type Engine struct {
 	// max seq of sst metas ingested into pebble
 	finishedMetaSeq atomic.Int32
 
-	config    backend.LocalEngineConfig
-	tableInfo *checkpoints.TidbTableInfo
+	config           backend.LocalEngineConfig
+	tableInfo        *checkpoints.TidbTableInfo
+	newTblIDAdjuster func([]byte) []byte
+	oldTblIDAdjuster func([]byte) []byte
 
 	dupDetectOpt DupDetectOpt
 
@@ -139,6 +141,19 @@ type Engine struct {
 	duplicateDB        *pebble.DB
 
 	logger log.Logger
+}
+
+func (e *Engine) toNewTblId(key []byte) []byte {
+	if e.newTblIDAdjuster == nil || len(key) == 0 {
+		return key
+	}
+	return e.newTblIDAdjuster(key)
+}
+func (e *Engine) toOldTblId(key []byte) []byte {
+	if e.oldTblIDAdjuster == nil || len(key) == 0 {
+		return key
+	}
+	return e.oldTblIDAdjuster(key)
 }
 
 func (e *Engine) setError(err error) {

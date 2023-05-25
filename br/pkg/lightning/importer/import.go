@@ -269,7 +269,8 @@ type ControllerParam struct {
 	// DupIndicator can expose the duplicate detection result to the caller
 	DupIndicator *atomic.Bool
 	// Keyspace name
-	KeyspaceName string
+	KeyspaceName      string
+	ResourceGroupName string
 }
 
 // NewImportController creates a new Controller instance.
@@ -1037,6 +1038,11 @@ func (rc *Controller) saveStatusCheckpoint(ctx context.Context, tableName string
 		} else {
 			m.RecordEngineCount(statusIfSucceed.MetricName(), err)
 		}
+	}
+
+	// Do not save checkpoint for import phase so we can reuse the checkpoints.
+	if statusIfSucceed >= checkpoints.CheckpointStatusClosed {
+		return nil
 	}
 
 	waitCh := make(chan error, 1)
@@ -2090,7 +2096,7 @@ func (rc *Controller) cleanCheckpoints(ctx context.Context) error {
 	case config.CheckpointRename:
 		err = rc.checkpointsDB.MoveCheckpoints(ctx, rc.cfg.TaskID)
 	case config.CheckpointRemove:
-		err = rc.checkpointsDB.RemoveCheckpoint(ctx, "all")
+		//err = rc.checkpointsDB.RemoveCheckpoint(ctx, "all")
 	}
 	task.End(zap.ErrorLevel, err)
 	if err != nil {

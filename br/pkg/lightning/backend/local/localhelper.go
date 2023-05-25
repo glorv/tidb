@@ -119,13 +119,14 @@ func (local *Backend) SplitAndScatterRegionInBatches(
 	needSplit bool,
 	regionSplitSize int64,
 	batchCnt int,
+	idAdapter func([]byte) []byte,
 ) error {
 	for i := 0; i < len(ranges); i += batchCnt {
 		batch := ranges[i:]
 		if len(batch) > batchCnt {
 			batch = batch[:batchCnt]
 		}
-		if err := local.SplitAndScatterRegionByRanges(ctx, batch, tableInfo, needSplit, regionSplitSize); err != nil {
+		if err := local.SplitAndScatterRegionByRanges(ctx, batch, tableInfo, needSplit, regionSplitSize, idAdapter); err != nil {
 			return errors.Trace(err)
 		}
 	}
@@ -142,9 +143,22 @@ func (local *Backend) SplitAndScatterRegionByRanges(
 	tableInfo *checkpoints.TidbTableInfo,
 	needSplit bool,
 	regionSplitSize int64,
+	idAdapter func([]byte) []byte,
 ) (err error) {
 	if len(ranges) == 0 {
 		return nil
+	}
+
+	if idAdapter != nil {
+		newRanges := make([]Range, 0, len(ranges))
+		for _, r := range ranges {
+			rg := Range{
+				start: idAdapter(append([]byte{}, r.start...)),
+				end:   idAdapter(append([]byte{}, r.end...)),
+			}
+			newRanges = append(newRanges, rg)
+		}
+		ranges = newRanges
 	}
 
 	if m, ok := metric.FromContext(ctx); ok {
@@ -606,6 +620,27 @@ func insideRegion(region *metapb.Region, metas []*sst.SSTMeta) bool {
 
 func keyInsideRegion(region *metapb.Region, key []byte) bool {
 	return bytes.Compare(key, region.GetStartKey()) >= 0 && (beforeEnd(key, region.GetEndKey()))
+}
+
+func intersectRangeAdjust(region *metapb.Region, rg Range, keyAdjuster func([]byte) []byte) Range {
+	var startKey, endKey []byte
+	if len(region.StartKey) > 0 {
+		_, startKey, _ = codec.DecodeBytes(region.StartKey, []byte{})
+		startKey = keyAdjuster(startKey)
+
+	}
+	if bytes.Compare(startKey, rg.start) < 0 {
+		startKey = rg.start
+	}
+	if len(region.EndKey) > 0 {
+		_, endKey, _ = codec.DecodeBytes(region.EndKey, []byte{})
+		endKey = keyAdjuster(endKey)
+	}
+	if beforeEnd(rg.end, endKey) {
+		endKey = rg.end
+	}
+
+	return Range{start: startKey, end: endKey}
 }
 
 func intersectRange(region *metapb.Region, rg Range) Range {

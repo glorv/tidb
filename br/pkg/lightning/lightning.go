@@ -392,6 +392,29 @@ var (
 	taskCfgRecorderKey = "taskCfgRecorderKey"
 )
 
+func getResourceGroupName(db *sql.DB) (string, error) {
+	if db == nil {
+		return "", nil
+	}
+
+	rows, err := db.Query("select current_resource_group();")
+	if err != nil {
+		return "", err
+	}
+	//nolint: errcheck
+	defer rows.Close()
+
+	var name string
+	if rows.Next() {
+		err = rows.Scan(&name)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return name, rows.Err()
+}
+
 func getKeyspaceName(db *sql.DB) (string, error) {
 	if db == nil {
 		return "", nil
@@ -549,6 +572,7 @@ func (l *Lightning) run(taskCtx context.Context, taskCfg *config.Config, o *opti
 	}
 
 	var keyspaceName string
+	var rgName string
 	if taskCfg.TikvImporter.Backend == config.BackendLocal {
 		if taskCfg.TikvImporter.KeyspaceName == "" {
 			keyspaceName, err = getKeyspaceName(db)
@@ -557,6 +581,11 @@ func (l *Lightning) run(taskCtx context.Context, taskCfg *config.Config, o *opti
 			}
 		}
 		o.logger.Info("acquired keyspace name", zap.String("keyspaceName", keyspaceName))
+		rgName, err = getResourceGroupName(db)
+		if err != nil {
+			return err
+		}
+		o.logger.Info("bind resource group", zap.String("name", rgName))
 	}
 
 	param := &importer.ControllerParam{
@@ -569,6 +598,7 @@ func (l *Lightning) run(taskCtx context.Context, taskCfg *config.Config, o *opti
 		CheckpointName:    o.checkpointName,
 		DupIndicator:      o.dupIndicator,
 		KeyspaceName:      keyspaceName,
+		ResourceGroupName: rgName,
 	}
 
 	var procedure *importer.Controller

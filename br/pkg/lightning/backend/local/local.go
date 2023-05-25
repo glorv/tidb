@@ -911,6 +911,36 @@ func (local *Backend) allocateTSIfNotExists(ctx context.Context, engine *Engine)
 	return engine.saveEngineMeta()
 }
 
+func (engine *Engine) adjustTableID() error {
+	firstKey, lastKey, err := engine.getFirstAndLastKey(nil, nil)
+	if err != nil {
+		return err
+	}
+
+	oldTblID := tablecodec.DecodeTableID(firstKey)
+	if oldTblID == 0 {
+		oldTblID = tablecodec.DecodeTableID(lastKey)
+		if oldTblID == 0 {
+			log.L().Error("invalid table id", zap.Stringer("engine", engine.UUID), logutil.Key("first", firstKey), logutil.Key("last", lastKey))
+			return errors.New("the kv table id is invalid")
+		}
+	}
+
+	log.L().Info("check engine table ID", zap.Int64("old", oldTblID), zap.Int64("new", engine.tableInfo.ID))
+
+	if oldTblID != engine.tableInfo.ID {
+		engine.newTblIDAdjuster = func(key []byte) []byte {
+			codec.EncodeInt(key[:1], engine.tableInfo.ID)
+			return key
+		}
+		engine.oldTblIDAdjuster = func(key []byte) []byte {
+			codec.EncodeInt(key[:1], oldTblID)
+			return key
+		}
+	}
+	return nil
+}
+
 // CloseEngine closes backend engine by uuid.
 func (local *Backend) CloseEngine(ctx context.Context, cfg *backend.EngineConfig, engineUUID uuid.UUID) error {
 	// flush mem table to storage, to free memory,
@@ -937,8 +967,9 @@ func (local *Backend) CloseEngine(ctx context.Context, cfg *backend.EngineConfig
 		if err = engine.loadEngineMeta(); err != nil {
 			return err
 		}
+
 		local.engines.Store(engineUUID, engine)
-		return nil
+		return engine.adjustTableID()
 	}
 
 	engine := engineI.(*Engine)
@@ -961,7 +992,11 @@ func (local *Backend) CloseEngine(ctx context.Context, cfg *backend.EngineConfig
 		return errors.Trace(err)
 	}
 	engine.wg.Wait()
-	return engine.ingestErr.Get()
+	if err := engine.ingestErr.Get(); err != nil {
+		return err
+	}
+
+	return engine.adjustTableID()
 }
 
 func (local *Backend) getImportClient(ctx context.Context, storeID uint64) (sst.ImportSSTClient, error) {
@@ -1078,7 +1113,7 @@ func (local *Backend) prepareAndSendJob(
 			failpoint.Break()
 		})
 
-		err = local.SplitAndScatterRegionInBatches(ctx, initialSplitRanges, engine.tableInfo, needSplit, regionSplitSize, maxBatchSplitRanges)
+		err = local.SplitAndScatterRegionInBatches(ctx, initialSplitRanges, engine.tableInfo, needSplit, regionSplitSize, maxBatchSplitRanges, engine.newTblIDAdjuster)
 		if err == nil || common.IsContextCanceledError(err) {
 			break
 		}
@@ -1200,8 +1235,8 @@ func (local *Backend) generateJobForRange(
 		return nil, nil
 	}
 
-	startKey := codec.EncodeBytes([]byte{}, pairStart)
-	endKey := codec.EncodeBytes([]byte{}, nextKey(pairEnd))
+	startKey := codec.EncodeBytes([]byte{}, engine.toNewTblId(pairStart))
+	endKey := codec.EncodeBytes([]byte{}, nextKey(engine.toNewTblId(pairEnd)))
 	regions, err := split.PaginateScanRegion(ctx, local.splitCli, startKey, endKey, scanRegionLimit)
 	if err != nil {
 		log.FromContext(ctx).Error("scan region failed",
@@ -1223,7 +1258,7 @@ func (local *Backend) generateJobForRange(
 			zap.Reflect("peers", region.Region.GetPeers()))
 
 		jobs = append(jobs, &regionJob{
-			keyRange:        intersectRange(region.Region, Range{start: start, end: end}),
+			keyRange:        intersectRangeAdjust(region.Region, Range{start: start, end: end}, engine.toOldTblId),
 			region:          region,
 			stage:           regionScanned,
 			engine:          engine,
@@ -1416,10 +1451,14 @@ func (local *Backend) ImportEngine(ctx context.Context, engineUUID uuid.UUID, re
 
 		var startKey, endKey []byte
 		if len(regionRanges[0].start) > 0 {
-			startKey = codec.EncodeBytes(nil, regionRanges[0].start)
+			startKey = append([]byte{}, regionRanges[0].start...)
+			lf.toNewTblId(startKey)
+			startKey = codec.EncodeBytes(nil, startKey)
 		}
 		if len(regionRanges[len(regionRanges)-1].end) > 0 {
-			endKey = codec.EncodeBytes(nil, regionRanges[len(regionRanges)-1].end)
+			endKey = append([]byte{}, regionRanges[len(regionRanges)-1].end...)
+			lf.toNewTblId(endKey)
+			endKey = codec.EncodeBytes(nil, endKey)
 		}
 		done, err := local.pdCtl.PauseSchedulersByKeyRange(subCtx, startKey, endKey)
 		if err != nil {
@@ -1616,10 +1655,11 @@ func (local *Backend) CleanupEngine(ctx context.Context, engineUUID uuid.UUID) e
 	if err != nil {
 		return err
 	}
-	err = localEngine.Cleanup(local.LocalStoreDir)
-	if err != nil {
-		return err
-	}
+
+	// err = localEngine.Cleanup(local.LocalStoreDir)
+	// if err != nil {
+	// 	return err
+	// }
 	localEngine.TotalSize.Store(0)
 	localEngine.Length.Store(0)
 	return nil
