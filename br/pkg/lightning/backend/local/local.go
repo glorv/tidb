@@ -416,10 +416,11 @@ type BackendConfig struct {
 	// the minimum value is 128.
 	MaxOpenFiles int
 	KeyspaceName string
+	ResourceGroupName string
 }
 
 // NewBackendConfig creates a new BackendConfig.
-func NewBackendConfig(cfg *config.Config, maxOpenFiles int, keyspaceName string) BackendConfig {
+func NewBackendConfig(cfg *config.Config, maxOpenFiles int, keyspaceName string, resourceGroupName string) BackendConfig {
 	return BackendConfig{
 		PDAddr:                  cfg.TiDB.PdAddr,
 		LocalStoreDir:           cfg.TikvImporter.SortedKVDir,
@@ -437,6 +438,7 @@ func NewBackendConfig(cfg *config.Config, maxOpenFiles int, keyspaceName string)
 		ShouldCheckWriteStall:   cfg.Cron.SwitchMode.Duration == 0,
 		MaxOpenFiles:            maxOpenFiles,
 		KeyspaceName:            keyspaceName,
+		ResourceGroupName:       resourceGroupName,
 	}
 }
 

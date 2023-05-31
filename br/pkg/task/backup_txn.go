@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
 	backuppb "github.com/pingcap/kvproto/pkg/brpb"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb/br/pkg/backup"
 	"github.com/pingcap/tidb/br/pkg/conn"
@@ -200,6 +201,9 @@ func RunBackupTxn(c context.Context, g glue.Glue, cmdName string, cfg *TxnKvConf
 		CompressionType:  cfg.CompressionType,
 		CompressionLevel: cfg.CompressionLevel,
 		CipherInfo:       &cfg.CipherInfo,
+		ResourceControlContext: &kvrpcpb.ResourceControlContext{
+			ResourceGroupName: "br",
+		},
 	}
 
 	metaWriter := metautil.NewMetaWriter(client.GetStorage(), metautil.MetaFileSize, false, metautil.MetaFile, &cfg.CipherInfo)

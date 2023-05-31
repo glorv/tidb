@@ -232,7 +232,8 @@ type Controller struct {
 	precheckItemBuilder *PrecheckItemBuilder
 	encBuilder          encode.EncodingBuilder
 
-	keyspaceName string
+	keyspaceName      string
+	resourceGroupName string
 }
 
 // LightningStatus provides the finished bytes and total bytes of the current task.
@@ -362,7 +363,7 @@ func NewImportControllerWithPauser(
 		regionSizeGetter := &local.TableRegionSizeGetterImpl{
 			DB: db,
 		}
-		backendConfig := local.NewBackendConfig(cfg, maxOpenFiles, p.KeyspaceName)
+		backendConfig := local.NewBackendConfig(cfg, maxOpenFiles, p.KeyspaceName, p.ResourceGroupName)
 		backendObj, err = local.NewBackend(ctx, tls, backendConfig, regionSizeGetter)
 		if err != nil {
 			return nil, common.NormalizeOrWrapErr(common.ErrUnknown, err)
@@ -460,7 +461,8 @@ func NewImportControllerWithPauser(
 		precheckItemBuilder: preCheckBuilder,
 		encBuilder:          encodingBuilder,
 
-		keyspaceName: p.KeyspaceName,
+		keyspaceName:      p.KeyspaceName,
+		resourceGroupName: p.ResourceGroupName,
 	}
 
 	return rc, nil

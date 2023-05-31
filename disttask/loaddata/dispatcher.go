@@ -101,7 +101,7 @@ func generateSubtaskMetas(ctx context.Context, taskMeta *TaskMeta) (subtaskMetas
 		Job: &asyncloaddata.Job{
 			ID: taskMeta.JobID,
 		},
-	}, controller)
+	}, controller, "")
 	if err != nil {
 		return nil, err
 	}

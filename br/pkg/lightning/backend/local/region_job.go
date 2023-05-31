@@ -247,6 +247,9 @@ func (local *Backend) writeToTiKV(ctx context.Context, j *regionJob) error {
 			Chunk: &sst.WriteRequest_Meta{
 				Meta: meta,
 			},
+			ResourceControlContext: &kvrpcpb.ResourceControlContext{
+				ResourceGroupName: local.ResourceGroupName,
+			},
 		}
 		if err = wstream.Send(req); err != nil {
 			return annotateErr(err, peer)

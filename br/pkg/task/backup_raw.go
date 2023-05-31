@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
 	backuppb "github.com/pingcap/kvproto/pkg/brpb"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb/br/pkg/backup"
 	"github.com/pingcap/tidb/br/pkg/conn"
@@ -212,6 +213,9 @@ func RunBackupRaw(c context.Context, g glue.Glue, cmdName string, cfg *RawKvConf
 		CompressionType:  cfg.CompressionType,
 		CompressionLevel: cfg.CompressionLevel,
 		CipherInfo:       &cfg.CipherInfo,
+		ResourceControlContext: &kvrpcpb.ResourceControlContext{
+			ResourceGroupName: "br",
+		},
 	}
 	rg := rtree.Range{
 		StartKey: backupRange.StartKey,

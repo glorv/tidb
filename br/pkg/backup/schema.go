@@ -188,6 +188,7 @@ func (s *schemaInfo) calculateChecksum(
 ) error {
 	exe, err := checksum.NewExecutorBuilder(s.tableInfo, backupTS).
 		SetConcurrency(concurrency).
+		SetResourceGroupName("br").
 		Build()
 	if err != nil {
 		return errors.Trace(err)

@@ -116,7 +116,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20221023144134-a1e5550cf13e
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/oauth2 v0.7.0
 	golang.org/x/sync v0.2.0
 	golang.org/x/sys v0.8.0
@@ -125,7 +125,7 @@ require (
 	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.8.0
 	google.golang.org/api v0.114.0
-	google.golang.org/grpc v1.54.0
+	google.golang.org/grpc v1.55.0
 	gopkg.in/yaml.v2 v2.4.0
 	honnef.co/go/tools v0.4.3
 	sourcegraph.com/sourcegraph/appdash v0.0.0-20190731080439-ebfcffb1b5c0
@@ -148,7 +148,7 @@ require (
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
-	github.com/apache/thrift v0.13.1-0.20201008052519-daf620915714 // indirect
+	github.com/apache/thrift v0.16.0 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bmatcuk/doublestar/v2 v2.0.4 // indirect
@@ -176,7 +176,7 @@ require (
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
-	github.com/golang/glog v1.0.0 // indirect
+	github.com/golang/glog v1.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/licensecheck v0.3.1 // indirect
@@ -267,7 +267,7 @@ require (
 	go.opentelemetry.io/otel/sdk/export/metric v0.20.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.20.0 // indirect
 	go.opentelemetry.io/otel/trace v0.20.0 // indirect
-	go.opentelemetry.io/proto/otlp v0.7.0 // indirect
+	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230224173230-c95f2b4c22f2 // indirect
 	golang.org/x/mod v0.10.0 // indirect
@@ -285,7 +285,7 @@ replace (
 	// fix potential security issue(CVE-2020-26160) introduced by indirect dependency.
 	github.com/dgrijalva/jwt-go => github.com/form3tech-oss/jwt-go v3.2.6-0.20210809144907-32ab6a8243d7+incompatible
 	github.com/go-ldap/ldap/v3 => github.com/YangKeao/ldap/v3 v3.4.5-0.20230421065457-369a3bab1117
-	github.com/pingcap/kvproto => github.com/glorv/kvproto v0.0.0-20230504080321-c29fc064fe61
+	github.com/pingcap/kvproto => github.com/glorv/kvproto v0.0.0-20230530070340-2ef578bd4b30
 	github.com/pingcap/tidb/parser => ./parser
 	go.opencensus.io => go.opencensus.io v0.23.1-0.20220331163232-052120675fac
 )

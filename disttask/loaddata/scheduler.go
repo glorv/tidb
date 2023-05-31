@@ -66,7 +66,7 @@ func (s *ImportScheduler) InitSubtaskExecEnv(ctx context.Context) error {
 		Job: &asyncloaddata.Job{
 			ID: s.taskMeta.JobID,
 		},
-	}, controller)
+	}, controller, "")
 	if err != nil {
 		return err
 	}

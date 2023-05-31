@@ -1700,6 +1700,7 @@ func (rc *Client) execChecksum(
 			SetConcurrency(concurrency).
 			SetOldKeyspace(tbl.RewriteRule.OldKeyspace).
 			SetNewKeyspace(tbl.RewriteRule.NewKeyspace).
+			SetResourceGroupName("br").
 			Build()
 		if err != nil {
 			return errors.Trace(err)

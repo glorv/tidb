@@ -76,7 +76,7 @@ func prepareSortDir(e *LoadDataController, jobID int64) (string, error) {
 }
 
 // NewTableImporter creates a new table importer.
-func NewTableImporter(param *JobImportParam, e *LoadDataController) (ti *TableImporter, err error) {
+func NewTableImporter(param *JobImportParam, e *LoadDataController, resourceGroupName string) (ti *TableImporter, err error) {
 	idAlloc := kv.NewPanickingAllocators(0)
 	tbl, err := tables.TableFromMeta(idAlloc, e.Table.Meta())
 	if err != nil {
@@ -129,6 +129,7 @@ func NewTableImporter(param *JobImportParam, e *LoadDataController) (ti *TableIm
 		ShouldCheckWriteStall: true,
 		MaxOpenFiles:          int(util.GenRLimit()),
 		KeyspaceName:          keySpaceName,
+		ResourceGroupName:     "", // TODO
 	}
 
 	tableMeta := &mydump.MDTableMeta{
@@ -315,7 +316,7 @@ func (ti *TableImporter) verifyChecksum(ctx context.Context) (err error) {
 		}
 	}
 	ti.logger.Info("local checksum", zap.Object("checksum", &localChecksum))
-	manager := local.NewTiKVChecksumManager(ti.kvStore.GetClient(), ti.backend.GetPDClient(), uint(ti.DistSQLScanConcurrency))
+	manager := local.NewTiKVChecksumManager(ti.kvStore.GetClient(), ti.backend.GetPDClient(), uint(ti.DistSQLScanConcurrency), ti.backend.ResourceGroupName)
 	remoteChecksum, err2 := manager.Checksum(ctx, ti.tableInfo)
 	if err2 != nil {
 		return err2

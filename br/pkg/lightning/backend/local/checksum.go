@@ -239,22 +239,25 @@ type TiKVChecksumManager struct {
 	client                 kv.Client
 	manager                gcTTLManager
 	distSQLScanConcurrency uint
+	resourceGroupName      string
 }
 
 var _ ChecksumManager = &TiKVChecksumManager{}
 
 // NewTiKVChecksumManager return a new tikv checksum manager
-func NewTiKVChecksumManager(client kv.Client, pdClient pd.Client, distSQLScanConcurrency uint) *TiKVChecksumManager {
+func NewTiKVChecksumManager(client kv.Client, pdClient pd.Client, distSQLScanConcurrency uint, resourceGroupName string) *TiKVChecksumManager {
 	return &TiKVChecksumManager{
 		client:                 client,
 		manager:                newGCTTLManager(pdClient),
 		distSQLScanConcurrency: distSQLScanConcurrency,
+		resourceGroupName:      resourceGroupName,
 	}
 }
 
 func (e *TiKVChecksumManager) checksumDB(ctx context.Context, tableInfo *checkpoints.TidbTableInfo, ts uint64) (*RemoteChecksum, error) {
 	executor, err := checksum.NewExecutorBuilder(tableInfo.Core, ts).
 		SetConcurrency(e.distSQLScanConcurrency).
+		SetResourceGroupName(e.resourceGroupName).
 		Build()
 	if err != nil {
 		return nil, errors.Trace(err)

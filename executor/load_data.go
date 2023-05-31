@@ -297,7 +297,7 @@ func (e *LoadDataWorker) getJobImporter(ctx context.Context, job *asyncloaddata.
 	if e.controller.ImportMode == importer.LogicalImportMode {
 		return newLogicalJobImporter(param, e, r)
 	}
-	return importer.NewTableImporter(param, e.controller)
+	return importer.NewTableImporter(param, e.controller, "")
 }
 
 // GetInfilePath get infile path.

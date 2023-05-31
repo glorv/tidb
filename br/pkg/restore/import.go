@@ -699,6 +699,9 @@ func (importer *FileImporter) downloadSST(
 		StorageCacheId: importer.cacheKey,
 		// For the older version of TiDB, the request type will  be default to `import_sstpb.RequestType_Legacy`
 		RequestType: import_sstpb.DownloadRequestType_Keyspace,
+		ResourceControlContext: &kvrpcpb.ResourceControlContext{
+			ResourceGroupName: "br",
+		},
 	}
 	log.Debug("download SST",
 		logutil.SSTMeta(sstMeta),
@@ -783,6 +786,9 @@ func (importer *FileImporter) downloadRawKVSST(
 		IsRawKv:        true,
 		CipherInfo:     cipher,
 		StorageCacheId: importer.cacheKey,
+		ResourceControlContext: &kvrpcpb.ResourceControlContext{
+			ResourceGroupName: "br",
+		},
 	}
 	log.Debug("download SST", logutil.SSTMeta(sstMeta), logutil.Region(regionInfo.Region))
 

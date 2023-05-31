@@ -18,6 +18,7 @@ import (
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	backuppb "github.com/pingcap/kvproto/pkg/brpb"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb/br/pkg/backup"
 	"github.com/pingcap/tidb/br/pkg/checkpoint"
@@ -505,6 +506,9 @@ func RunBackup(c context.Context, g glue.Glue, cmdName string, cfg *BackupConfig
 		CompressionLevel: cfg.CompressionLevel,
 		CipherInfo:       &cfg.CipherInfo,
 		ReplicaRead:      len(cfg.ReplicaReadLabel) != 0,
+		ResourceControlContext: &kvrpcpb.ResourceControlContext{
+			ResourceGroupName: "br",
+		},
 	}
 	brVersion := g.GetVersion()
 	clusterVersion, err := mgr.GetClusterVersion(ctx)
