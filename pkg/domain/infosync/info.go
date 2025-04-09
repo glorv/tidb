@@ -594,13 +594,13 @@ func PutRuleBundlesWithRetry(ctx context.Context, bundles []*placement.Bundle, m
 }
 
 // GetResourceGroup is used to get one specific resource group from resource manager.
-func GetResourceGroup(ctx context.Context, name string) (*rmpb.ResourceGroup, error) {
+func GetResourceGroup(ctx context.Context, keyspaceID uint32, name string) (*rmpb.ResourceGroup, error) {
 	is, err := getGlobalInfoSyncer()
 	if err != nil {
 		return nil, err
 	}
 
-	return is.resourceManagerClient.GetResourceGroup(ctx, name)
+	return is.resourceManagerClient.GetResourceGroup(ctx, keyspaceID, name)
 }
 
 // ListResourceGroups is used to get all resource groups from resource manager.
@@ -634,12 +634,12 @@ func ModifyResourceGroup(ctx context.Context, group *rmpb.ResourceGroup) error {
 }
 
 // DeleteResourceGroup is used to delete one specific resource group from resource manager.
-func DeleteResourceGroup(ctx context.Context, name string) error {
+func DeleteResourceGroup(ctx context.Context, keyspaceID uint32, name string) error {
 	is, err := getGlobalInfoSyncer()
 	if err != nil {
 		return err
 	}
-	_, err = is.resourceManagerClient.DeleteResourceGroup(ctx, name)
+	_, err = is.resourceManagerClient.DeleteResourceGroup(ctx, keyspaceID, name)
 	return err
 }
 

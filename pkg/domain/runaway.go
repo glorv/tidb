@@ -36,14 +36,14 @@ const (
 	runawayLoopLogErrorIntervalCount = 1800
 )
 
-func (do *Domain) initResourceGroupsController(ctx context.Context, pdClient pd.Client, uniqueID uint64) error {
+func (do *Domain) initResourceGroupsController(ctx context.Context, pdClient pd.Client, keyspaceID uint32, uniqueID uint64) error {
 	if pdClient == nil {
 		logutil.BgLogger().Warn("cannot setup up resource controller, not using tikv storage")
 		// return nil as unistore doesn't support it
 		return nil
 	}
 
-	control, err := rmclient.NewResourceGroupController(ctx, uniqueID, pdClient, nil, rmclient.WithMaxWaitDuration(runaway.MaxWaitDuration))
+	control, err := rmclient.NewResourceGroupController(ctx, keyspaceID, uniqueID, pdClient, nil, rmclient.WithMaxWaitDuration(runaway.MaxWaitDuration))
 	if err != nil {
 		return err
 	}

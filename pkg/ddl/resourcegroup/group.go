@@ -24,7 +24,7 @@ import (
 const MaxGroupNameLength = 32
 
 // NewGroupFromOptions creates a new resource group from the given options.
-func NewGroupFromOptions(groupName string, options *model.ResourceGroupSettings) (*rmpb.ResourceGroup, error) {
+func NewGroupFromOptions(keyspaceID uint32, groupName string, options *model.ResourceGroupSettings) (*rmpb.ResourceGroup, error) {
 	if options == nil {
 		return nil, ErrInvalidGroupSettings
 	}
@@ -33,6 +33,7 @@ func NewGroupFromOptions(groupName string, options *model.ResourceGroupSettings)
 	}
 
 	group := &rmpb.ResourceGroup{
+		KeyspaceId: keyspaceID,
 		Name: groupName,
 	}
 

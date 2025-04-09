@@ -1438,7 +1438,7 @@ func (do *Domain) Init(
 	}
 
 	// should put `initResourceGroupsController` after fetching server ID
-	err = do.initResourceGroupsController(ctx, pdCli, do.ServerID())
+	err = do.initResourceGroupsController(ctx, pdCli, uint32(do.Store().GetCodec().GetKeyspaceID()), do.ServerID())
 	if err != nil {
 		return err
 	}

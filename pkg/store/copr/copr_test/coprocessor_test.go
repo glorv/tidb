@@ -214,7 +214,7 @@ func (p *mockResourceGroupProvider) Get(ctx context.Context, key []byte, opts ..
 	}, nil
 }
 
-func (p *mockResourceGroupProvider) GetResourceGroup(ctx context.Context, name string, opts ...pd.GetResourceGroupOption) (*rmpb.ResourceGroup, error) {
+func (p *mockResourceGroupProvider) GetResourceGroup(ctx context.Context, keyspaceID uint32, name string, opts ...pd.GetResourceGroupOption) (*rmpb.ResourceGroup, error) {
 	group1 := "rg1"
 	if name == group1 {
 		return &rmpb.ResourceGroup{
@@ -259,7 +259,7 @@ func TestBuildCopIteratorWithRunawayChecker(t *testing.T) {
 	}
 
 	ranges := copr.BuildKeyRanges("a", "c", "d", "e", "h", "x", "y", "z")
-	resourceCtl, err := rmclient.NewResourceGroupController(context.Background(), 1, mockPrivider, nil)
+	resourceCtl, err := rmclient.NewResourceGroupController(context.Background(), 0, 1, mockPrivider, nil)
 	require.NoError(t, err)
 	manager := runaway.NewRunawayManager(resourceCtl, "mock://test", nil, nil, nil, nil)
 	defer manager.Stop()

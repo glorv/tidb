@@ -6029,7 +6029,10 @@ func (e *executor) AlterTablePartitionPlacement(ctx sessionctx.Context, tableIde
 // AddResourceGroup implements the DDL interface, creates a resource group.
 func (e *executor) AddResourceGroup(ctx sessionctx.Context, stmt *ast.CreateResourceGroupStmt) (err error) {
 	groupName := stmt.ResourceGroupName
-	groupInfo := &model.ResourceGroupInfo{Name: groupName, ResourceGroupSettings: model.NewResourceGroupSettings()}
+	groupInfo := &model.ResourceGroupInfo{
+		Name:                  groupName,
+		ResourceGroupSettings: model.NewResourceGroupSettings(),
+	}
 	groupInfo, err = buildResourceGroup(groupInfo, stmt.ResourceGroupOptionList)
 	if err != nil {
 		return err

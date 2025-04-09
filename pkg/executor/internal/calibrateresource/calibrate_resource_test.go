@@ -65,7 +65,7 @@ func TestCalibrateResource(t *testing.T) {
 	mockPrivider := &mockResourceGroupProvider{
 		cfg: *oldCfg,
 	}
-	resourceCtl, err := rmclient.NewResourceGroupController(context.Background(), 1, mockPrivider, nil)
+	resourceCtl, err := rmclient.NewResourceGroupController(context.Background(), 0, 1, mockPrivider, nil)
 	require.NoError(t, err)
 	do.SetResourceGroupsController(resourceCtl)
 

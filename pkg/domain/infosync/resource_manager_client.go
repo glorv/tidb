@@ -69,7 +69,7 @@ func (m *mockResourceManagerClient) ListResourceGroups(context.Context, ...pd.Ge
 	return groups, nil
 }
 
-func (m *mockResourceManagerClient) GetResourceGroup(_ context.Context, name string, _ ...pd.GetResourceGroupOption) (*rmpb.ResourceGroup, error) {
+func (m *mockResourceManagerClient) GetResourceGroup(_ context.Context, keyspaceID uint32, name string, _ ...pd.GetResourceGroupOption) (*rmpb.ResourceGroup, error) {
 	m.RLock()
 	defer m.RUnlock()
 	group, ok := m.groups[name]
@@ -116,7 +116,7 @@ func (m *mockResourceManagerClient) ModifyResourceGroup(_ context.Context, group
 	return "Success!", nil
 }
 
-func (m *mockResourceManagerClient) DeleteResourceGroup(_ context.Context, name string) (string, error) {
+func (m *mockResourceManagerClient) DeleteResourceGroup(_ context.Context, keyspaceID uint32, name string) (string, error) {
 	m.Lock()
 	defer m.Unlock()
 	group := m.groups[name]

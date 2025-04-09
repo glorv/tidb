@@ -53,7 +53,7 @@ func onCreateResourceGroup(jobCtx *jobContext, job *model.Job) (ver int64, _ err
 	groupInfo.State = model.StateNone
 
 	// check if resource group value is valid and convert to proto format.
-	protoGroup, err := resourcegroup.NewGroupFromOptions(groupInfo.Name.L, groupInfo.ResourceGroupSettings)
+	protoGroup, err := resourcegroup.NewGroupFromOptions(uint32(jobCtx.store.GetCodec().GetKeyspaceID()), groupInfo.Name.L, groupInfo.ResourceGroupSettings)
 	if err != nil {
 		logutil.DDLLogger().Warn("convert to resource group failed", zap.Error(err))
 		job.State = model.JobStateCancelled
@@ -101,7 +101,7 @@ func onAlterResourceGroup(jobCtx *jobContext, job *model.Job) (ver int64, _ erro
 	}
 	alterGroupInfo := args.RGInfo
 	// check if resource group value is valid and convert to proto format.
-	protoGroup, err := resourcegroup.NewGroupFromOptions(alterGroupInfo.Name.L, alterGroupInfo.ResourceGroupSettings)
+	protoGroup, err := resourcegroup.NewGroupFromOptions(uint32(jobCtx.store.GetCodec().GetKeyspaceID()), alterGroupInfo.Name.L, alterGroupInfo.ResourceGroupSettings)
 	if err != nil {
 		logutil.DDLLogger().Warn("convert to resource group failed", zap.Error(err))
 		job.State = model.JobStateCancelled
@@ -166,7 +166,7 @@ func onDropResourceGroup(jobCtx *jobContext, job *model.Job) (ver int64, _ error
 		if err != nil {
 			return ver, errors.Trace(err)
 		}
-		err = infosync.DeleteResourceGroup(context.TODO(), groupInfo.Name.L)
+		err = infosync.DeleteResourceGroup(context.TODO(), uint32(jobCtx.store.GetCodec().GetKeyspaceID()), groupInfo.Name.L)
 		if err != nil {
 			return ver, errors.Trace(err)
 		}
@@ -342,6 +342,7 @@ func parseBackgroundJobTypes(t string) ([]string, error) {
 }
 
 func checkResourceGroupValidation(groupInfo *model.ResourceGroupInfo) error {
-	_, err := resourcegroup.NewGroupFromOptions(groupInfo.Name.L, groupInfo.ResourceGroupSettings)
+	// we pass a default keyspace ID as it does not impact the result.
+	_, err := resourcegroup.NewGroupFromOptions(0, groupInfo.Name.L, groupInfo.ResourceGroupSettings)
 	return err
 }

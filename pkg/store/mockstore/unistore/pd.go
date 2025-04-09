@@ -238,6 +238,12 @@ func (c *mockPDServiceDiscovery) AddServingURLSwitchedCallback(callbacks ...func
 
 func (c *mockPDServiceDiscovery) AddServiceURLsSwitchedCallback(callbacks ...func()) {}
 
+func (c *mockPDServiceDiscovery) ExecAndAddLeaderSwitchedCallback(cb sd.LeaderSwitchedCallbackFunc) {}
+
+func (c *mockPDServiceDiscovery) AddLeaderSwitchedCallback(cb sd.LeaderSwitchedCallbackFunc) {}
+
+func (c *mockPDServiceDiscovery) AddMembersChangedCallback(cb func()) {}
+
 type mockTSFuture struct {
 	pdc  *pdClient
 	ctx  context.Context
@@ -287,7 +293,7 @@ func (c *pdClient) GetOperator(ctx context.Context, regionID uint64) (*pdpb.GetO
 	return &pdpb.GetOperatorResponse{Status: pdpb.OperatorStatus_SUCCESS}, nil
 }
 
-func (c *pdClient) GetAllMembers(ctx context.Context) ([]*pdpb.Member, error) {
+func (c *pdClient) GetAllMembers(ctx context.Context) (*pdpb.GetMembersResponse, error) {
 	return nil, nil
 }
 

@@ -675,7 +675,7 @@ func (local *Backend) TotalMemoryConsume() int64 {
 	return local.engineMgr.totalMemoryConsume()
 }
 
-func checkMultiIngestSupport(ctx context.Context, pdCli pd.Client, factory importClientFactory) (bool, error) {
+func checkMultiIngestSupport(ctx context.Context, pdCli pd.Client, factory ImportClientFactory) (bool, error) {
 	stores, err := pdCli.GetAllStores(ctx, opt.WithExcludeTombstone())
 	if err != nil {
 		return false, errors.Trace(err)
@@ -703,7 +703,7 @@ func checkMultiIngestSupport(ctx context.Context, pdCli pd.Client, factory impor
 					return false, ctx.Err()
 				}
 			}
-			client, err1 := importClientFactory.Create(ctx, s.Id)
+			client, err1 := factory.Create(ctx, s.Id)
 			if err1 != nil {
 				err = err1
 				log.FromContext(ctx).Warn("get import client failed", zap.Error(err), zap.String("store", s.Address))
