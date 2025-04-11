@@ -218,7 +218,7 @@ func (e *memtableRetriever) retrieve(ctx context.Context, sctx sessionctx.Contex
 		case infoschema.ClusterTableMemoryUsageOpsHistory:
 			err = e.setDataForClusterMemoryUsageOpsHistory(sctx)
 		case infoschema.TableResourceGroups:
-			err = e.setDataFromResourceGroups()
+			err = e.setDataFromResourceGroups(uint32(sctx.GetStore().GetCodec().GetKeyspaceID()))
 		case infoschema.TableRunawayWatches:
 			err = e.setDataFromRunawayWatches(sctx)
 		case infoschema.TableCheckConstraints:
@@ -3752,13 +3752,17 @@ const (
 	unlimitedFillRate = "UNLIMITED"
 )
 
-func (e *memtableRetriever) setDataFromResourceGroups() error {
+func (e *memtableRetriever) setDataFromResourceGroups(keyspaceID uint32) error {
 	resourceGroups, err := infosync.ListResourceGroups(context.TODO())
 	if err != nil {
 		return errors.Errorf("failed to access resource group manager, error message is %s", err.Error())
 	}
 	rows := make([][]types.Datum, 0, len(resourceGroups))
 	for _, group := range resourceGroups {
+		// TODO: move this logic into ListResourceGroups
+		if group.KeyspaceId != keyspaceID {
+			continue
+		}
 		//mode := ""
 		burstable := burstdisableStr
 		priority := pmodel.PriorityValueToName(uint64(group.Priority))
