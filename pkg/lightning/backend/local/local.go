@@ -32,6 +32,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
+	"github.com/pingcap/kvproto/pkg/import_sstpb"
 	sst "github.com/pingcap/kvproto/pkg/import_sstpb"
 	"github.com/pingcap/kvproto/pkg/metapb"
 	"github.com/pingcap/tidb/br/pkg/logutil"
@@ -905,13 +906,13 @@ func getRegionSplitKeys(
 // and scatter regions for these range and send region jobs to jobToWorkerCh.
 func (local *Backend) prepareAndSendJob(
 	ctx context.Context,
-	engine engineapi.Engine,
+	e engineapi.Engine,
 	regionSplitKeys [][]byte,
 	regionSplitSize, regionSplitKeyCnt int64,
 	jobToWorkerCh chan<- *regionJob,
 	jobWg *sync.WaitGroup,
-) error {
-	lfTotalSize, lfLength := engine.KVStatistics()
+) (func(), error) {
+	lfTotalSize, lfLength := e.KVStatistics()
 	splitRangesBatch := GetMaxBatchSplitRanges()
 	maxRangesPerSec := GetMaxSplitRangePerSec()
 
@@ -928,9 +929,10 @@ func (local *Backend) prepareAndSendJob(
 	failpoint.Inject("failToSplit", func(_ failpoint.Value) {
 		needSplit = true
 	})
+	endFn := func() {}
 	if needSplit {
 		var err error
-		logger := log.Wrap(tidblogutil.Logger(ctx)).With(zap.String("uuid", engine.ID())).Begin(zap.InfoLevel, "split and scatter ranges")
+		logger := log.Wrap(tidblogutil.Logger(ctx)).With(zap.String("uuid", e.ID())).Begin(zap.InfoLevel, "split and scatter ranges")
 		backOffTime := 10 * time.Second
 		maxbackoffTime := 120 * time.Second
 		for i := range maxRetryTimes {
@@ -943,12 +945,12 @@ func (local *Backend) prepareAndSendJob(
 				break
 			}
 
-			tidblogutil.Logger(ctx).Warn("split and scatter failed in retry", zap.String("engine ID", engine.ID()),
+			tidblogutil.Logger(ctx).Warn("split and scatter failed in retry", zap.String("engine ID", e.ID()),
 				log.ShortError(err), zap.Int("retry", i))
 			select {
 			case <-time.After(backOffTime):
 			case <-ctx.Done():
-				return ctx.Err()
+				return endFn, ctx.Err()
 			}
 			backOffTime *= 2
 			if backOffTime > maxbackoffTime {
@@ -957,18 +959,79 @@ func (local *Backend) prepareAndSendJob(
 		}
 		logger.End(zap.ErrorLevel, err)
 		if err != nil {
-			return err
+			return endFn, err
+		}
+
+		sKey, _, err := e.GetKeyRange()
+		if err != nil {
+			return endFn, err
+		}
+
+		tableID, _, _, _ := tablecodec.DecodeKeyHead(sKey)
+		tableStartKey := tablecodec.EncodeTablePrefix(tableID)
+		checkEndKey := nextKey(tableStartKey)
+
+		stores, err := local.pdCli.GetAllStores(ctx, opt.WithExcludeTombstone())
+		if err != nil {
+			return endFn, err
+		}
+		checkReq := &import_sstpb.CheckAndCompactRequest{
+			Range: &import_sstpb.Range{
+				Start: tableStartKey,
+				End:   checkEndKey,
+			},
+			Ttl: 3600,
+		}
+		clients := make([]sst.ImportSSTClient, 0, len(stores))
+		storeAddrs := make([]string, 0, len(stores))
+		for _, store := range stores {
+			if store.StatusAddress == "" || engine.IsTiFlash(store) {
+				continue
+			}
+
+			importCli, err := local.importClientFactory.create(ctx, store.Id)
+			if err != nil {
+				return endFn, err
+			}
+
+			_, err = importCli.CheckAndCompact(ctx, checkReq)
+			if err == nil {
+				clients = append(clients, importCli)
+				storeAddrs = append(storeAddrs, store.StatusAddress)
+				tidblogutil.Logger(ctx).Info("CheckAndCompact store success", zap.String("store", store.StatusAddress))
+			} else {
+				tidblogutil.Logger(ctx).Warn("CheckAndCompact store failed", zap.Error(err), zap.String("store", store.StatusAddress))
+			}
+		}
+		if len(clients) > 0 {
+			endFn = func() {
+				removeReq := &import_sstpb.RemoveRangeRequest{
+					Range: &import_sstpb.Range{
+						Start: tableStartKey,
+						End:   checkEndKey,
+					},
+				}
+				for i, c := range clients {
+					_, err = c.RemoveForcePartitionRange(ctx, removeReq)
+					if err != nil {
+						tidblogutil.Logger(ctx).Warn("RemoveForcePartitionRange failed", zap.Error(err), zap.String("store", storeAddrs[i]))
+					} else {
+						tidblogutil.Logger(ctx).Info("RemoveForcePartitionRange store success", zap.String("store", storeAddrs[i]))
+					}
+				}
+			}
 		}
 	}
 
-	return local.generateAndSendJob(
+	err := local.generateAndSendJob(
 		ctx,
-		engine,
+		e,
 		regionSplitSize,
 		regionSplitKeyCnt,
 		jobToWorkerCh,
 		jobWg,
 	)
+	return endFn, err
 }
 
 // generateAndSendJob scans the region in ranges and send region jobs to jobToWorkerCh.
@@ -1420,7 +1483,7 @@ func (local *Backend) doImport(
 	failpoint.Label("afterStartWorker")
 
 	workGroup.Go(func() error {
-		err := local.prepareAndSendJob(
+		endFn, err := local.prepareAndSendJob(
 			workerCtx,
 			engine,
 			regionSplitKeys,
@@ -1448,6 +1511,7 @@ func (local *Backend) doImport(
 			})
 		}
 		close(jobFromWorkerCh)
+		endFn()
 		return nil
 	})
 
