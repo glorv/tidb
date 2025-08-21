@@ -837,6 +837,66 @@ func (local *Backend) CloseEngine(ctx context.Context, cfg *backend.EngineConfig
 	return local.engineMgr.closeEngine(ctx, cfg, engineUUID)
 }
 
+func (local *Backend) PrepareForTable(ctx context.Context, tableID int64) (func(), error) {
+	tableStartKey := tablecodec.EncodeTablePrefix(tableID)
+	checkEndKey := tablecodec.EncodeTablePrefix(tableID + 1)
+
+	startKey, endKey := local.tikvCodec.EncodeRange(tableStartKey, checkEndKey)
+
+	stores, err := local.pdCli.GetAllStores(ctx, opt.WithExcludeTombstone())
+	if err != nil {
+		return nil, err
+	}
+	checkReq := &import_sstpb.CheckAndCompactRequest{
+		Range: &import_sstpb.Range{
+			Start: startKey,
+			End:   endKey,
+		},
+		Ttl: 3600,
+	}
+	clients := make([]sst.ImportSSTClient, 0, len(stores))
+	storeAddrs := make([]string, 0, len(stores))
+	for _, store := range stores {
+		if store.StatusAddress == "" || engine.IsTiFlash(store) {
+			continue
+		}
+
+		importCli, err := local.importClientFactory.create(ctx, store.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = importCli.CheckAndCompact(ctx, checkReq)
+		if err == nil {
+			clients = append(clients, importCli)
+			storeAddrs = append(storeAddrs, store.StatusAddress)
+			tidblogutil.Logger(ctx).Info("CheckAndCompact store success", zap.String("store", store.StatusAddress))
+		} else {
+			tidblogutil.Logger(ctx).Warn("CheckAndCompact store failed", zap.Error(err), zap.String("store", store.StatusAddress))
+		}
+	}
+	var endFn func()
+	if len(clients) > 0 {
+		endFn = func() {
+			removeReq := &import_sstpb.RemoveRangeRequest{
+				Range: &import_sstpb.Range{
+					Start: startKey,
+					End:   endKey,
+				},
+			}
+			for i, c := range clients {
+				_, err = c.RemoveForcePartitionRange(ctx, removeReq)
+				if err != nil {
+					tidblogutil.Logger(ctx).Warn("RemoveForcePartitionRange failed", zap.Error(err), zap.String("store", storeAddrs[i]))
+				} else {
+					tidblogutil.Logger(ctx).Info("RemoveForcePartitionRange store success", zap.String("store", storeAddrs[i]))
+				}
+			}
+		}
+	}
+	return endFn, nil
+}
+
 func splitRangeBySizeProps(fullRange engineapi.Range, sizeProps *sizeProperties, sizeLimit int64, keysLimit int64) []engineapi.Range {
 	ranges := make([]engineapi.Range, 0, sizeProps.totalSize/uint64(sizeLimit))
 	curSize := uint64(0)
@@ -911,7 +971,7 @@ func (local *Backend) prepareAndSendJob(
 	regionSplitSize, regionSplitKeyCnt int64,
 	jobToWorkerCh chan<- *regionJob,
 	jobWg *sync.WaitGroup,
-) (func(), error) {
+) error {
 	lfTotalSize, lfLength := e.KVStatistics()
 	splitRangesBatch := GetMaxBatchSplitRanges()
 	maxRangesPerSec := GetMaxSplitRangePerSec()
@@ -929,7 +989,6 @@ func (local *Backend) prepareAndSendJob(
 	failpoint.Inject("failToSplit", func(_ failpoint.Value) {
 		needSplit = true
 	})
-	endFn := func() {}
 	if needSplit {
 		var err error
 		logger := log.Wrap(tidblogutil.Logger(ctx)).With(zap.String("uuid", e.ID())).Begin(zap.InfoLevel, "split and scatter ranges")
@@ -950,7 +1009,7 @@ func (local *Backend) prepareAndSendJob(
 			select {
 			case <-time.After(backOffTime):
 			case <-ctx.Done():
-				return endFn, ctx.Err()
+				return ctx.Err()
 			}
 			backOffTime *= 2
 			if backOffTime > maxbackoffTime {
@@ -959,67 +1018,7 @@ func (local *Backend) prepareAndSendJob(
 		}
 		logger.End(zap.ErrorLevel, err)
 		if err != nil {
-			return endFn, err
-		}
-
-		sKey, _, err := e.GetKeyRange()
-		if err != nil {
-			return endFn, err
-		}
-
-		tableID, _, _, _ := tablecodec.DecodeKeyHead(sKey)
-		tableStartKey := tablecodec.EncodeTablePrefix(tableID)
-		checkEndKey := nextKey(tableStartKey)
-
-		stores, err := local.pdCli.GetAllStores(ctx, opt.WithExcludeTombstone())
-		if err != nil {
-			return endFn, err
-		}
-		checkReq := &import_sstpb.CheckAndCompactRequest{
-			Range: &import_sstpb.Range{
-				Start: tableStartKey,
-				End:   checkEndKey,
-			},
-			Ttl: 3600,
-		}
-		clients := make([]sst.ImportSSTClient, 0, len(stores))
-		storeAddrs := make([]string, 0, len(stores))
-		for _, store := range stores {
-			if store.StatusAddress == "" || engine.IsTiFlash(store) {
-				continue
-			}
-
-			importCli, err := local.importClientFactory.create(ctx, store.Id)
-			if err != nil {
-				return endFn, err
-			}
-
-			_, err = importCli.CheckAndCompact(ctx, checkReq)
-			if err == nil {
-				clients = append(clients, importCli)
-				storeAddrs = append(storeAddrs, store.StatusAddress)
-				tidblogutil.Logger(ctx).Info("CheckAndCompact store success", zap.String("store", store.StatusAddress))
-			} else {
-				tidblogutil.Logger(ctx).Warn("CheckAndCompact store failed", zap.Error(err), zap.String("store", store.StatusAddress))
-			}
-		}
-		if len(clients) > 0 {
-			endFn = func() {
-				removeReq := &import_sstpb.RemoveRangeRequest{
-					Range: &import_sstpb.Range{
-						Start: tableStartKey,
-						End:   checkEndKey,
-					},
-				}
-				for i, c := range clients {
-					_, err = c.RemoveForcePartitionRange(ctx, removeReq)
-					if err != nil {
-						tidblogutil.Logger(ctx).Warn("RemoveForcePartitionRange failed", zap.Error(err), zap.String("store", storeAddrs[i]))
-					} else {
-						tidblogutil.Logger(ctx).Info("RemoveForcePartitionRange store success", zap.String("store", storeAddrs[i]))
-					}
-				}
-			}
+			return err
 		}
 	}
 
@@ -1031,7 +1030,7 @@ func (local *Backend) prepareAndSendJob(
 		jobToWorkerCh,
 		jobWg,
 	)
-	return endFn, err
+	return err
 }
 
 // generateAndSendJob scans the region in ranges and send region jobs to jobToWorkerCh.
@@ -1483,7 +1482,7 @@ func (local *Backend) doImport(
 	failpoint.Label("afterStartWorker")
 
 	workGroup.Go(func() error {
-		endFn, err := local.prepareAndSendJob(
+		err := local.prepareAndSendJob(
 			workerCtx,
 			engine,
 			regionSplitKeys,
@@ -1511,7 +1510,6 @@ func (local *Backend) doImport(
 			})
 		}
 		close(jobFromWorkerCh)
-		endFn()
 		return nil
 	})
 

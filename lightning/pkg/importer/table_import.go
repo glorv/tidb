@@ -262,6 +262,23 @@ func (tr *TableImporter) importTable(
 		}
 	}
 
+	// skip force partition for small table with only 1 chunk.
+	needForcePartition := false
+	for _, e := range cp.Engines {
+		if len(e.Chunks) > 1 {
+			needForcePartition = true
+		}
+	}
+	if needForcePartition {
+		cleanupFn, err := rc.backend.PrepareForTable(ctx, tr.tableInfo.ID)
+		if err != nil {
+			tr.logger.Error("prepare for table failed", zap.String("table", tr.tableName), zap.Error(err))
+		}
+		if cleanupFn != nil {
+			defer cleanupFn()
+		}
+	}
+
 	// 4. Restore engines (if still needed)
 	err := tr.importEngines(ctx, rc, cp)
 	if err != nil {
